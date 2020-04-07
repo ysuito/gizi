@@ -147,35 +147,35 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        if (ContextCompat.checkSelfPermission(this,
-                        Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    arrayOf(Manifest.permission.RECORD_AUDIO),
-                PERMISSION_CODE);
-        }
-        val checkBox : CheckBox = findViewById(R.id.checkbox);
-        checkBox.setOnClickListener {
-            val check: Boolean = checkBox.isChecked()
-            if (check) {
-                ncOn = true
-            } else {
-                ncOn = false
-            }
-        }
-        val playButton: Button = findViewById(R.id.button)
-        playButton.setOnClickListener {
-            if (!isPlaying) {
-                isPlaying = true
-                start()
-                playButton.setText("停止")
-            } else {
-                isPlaying = false
-                stop()
-                playButton.setText("実行")
-            }
-        }
+        setContentView(R.layout.prototype_main)
+//        if (ContextCompat.checkSelfPermission(this,
+//                        Manifest.permission.RECORD_AUDIO)
+//                != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this,
+//                    arrayOf(Manifest.permission.RECORD_AUDIO),
+//                PERMISSION_CODE);
+//        }
+//        val checkBox : CheckBox = findViewById(R.id.checkbox);
+//        checkBox.setOnClickListener {
+//            val check: Boolean = checkBox.isChecked()
+//            if (check) {
+//                ncOn = true
+//            } else {
+//                ncOn = false
+//            }
+//        }
+//        val playButton: Button = findViewById(R.id.button)
+//        playButton.setOnClickListener {
+//            if (!isPlaying) {
+//                isPlaying = true
+//                start()
+//                playButton.setText("停止")
+//            } else {
+//                isPlaying = false
+//                stop()
+//                playButton.setText("実行")
+//            }
+//        }
 
     }
 
