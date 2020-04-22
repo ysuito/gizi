@@ -1,3 +1,14 @@
 <resources>
-    <string name="app_name">gizi</string>
+    <string name="app_name">GIZI</string>
+    <string name="action_settings">Settings</string>
+    <string name="hint_name">name...</string>
+    <string name="hint_frequencies">frequencies...</string>
+    <string name="hint_gain">gain...</string>
+    <string name="save">保存</string>
+    <string name="delete">削除</string>
+    <string name="description_start_stop">start stop</string>
+    <string name="noise_reduction">自動ノイズ低減</string>
+    <string name="noise_reduction_public_transportation">公共交通機関ノイズ低減</string>
+    <string name="empty_not_saved">Word not saved because it is empty.</string>
+    <string name="delete_all">すべて削除</string>
 </resources>
