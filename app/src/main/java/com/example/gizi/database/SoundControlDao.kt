@@ -32,8 +32,8 @@ interface SoundControlDao {
     @Query("SELECT * from setting_table ORDER BY id ASC")
     fun getAllSettings():LiveData<List<Setting>>
 
-    @Query("SELECT * from setting_table")
-    fun getSetting():LiveData<List<Setting>>
+    @Query("SELECT * from setting_table ORDER BY id ASC LIMIT 1")
+    fun getSetting():LiveData<Setting>
 
     @Query("SELECT * from setting_table LIMIT 1")
     fun getAnySetting():Array<Setting>

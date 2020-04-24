@@ -1,9 +1,10 @@
 <resources>
     <string name="app_name">GIZI</string>
     <string name="action_settings">Settings</string>
-    <string name="hint_name">name...</string>
-    <string name="hint_frequencies">frequencies...</string>
-    <string name="hint_gain">gain...</string>
+    <string name="hint_name">名前</string>
+    <string name="hint_frequencies">周波数帯</string>
+    <string name="helper_name">対象となる音の名前</string>
+    <string name="helper_frequencies">10-100,1995-2005</string>
     <string name="save">保存</string>
     <string name="delete">削除</string>
     <string name="description_start_stop">start stop</string>

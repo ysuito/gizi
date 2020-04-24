@@ -15,7 +15,7 @@ class NewGainActivity:AppCompatActivity() {
         val id = intent.getIntExtra("id", 0)
         val name = intent.getStringExtra("name")
         val frequencies = intent.getStringExtra("frequencies")
-        val gain = intent.getIntExtra("gain", 0)
+        val gain = intent.getIntExtra("gain", 50)
 
         if (name != null) {
             edit_name.setText(name)
@@ -23,24 +23,19 @@ class NewGainActivity:AppCompatActivity() {
         if (frequencies != null) {
             edit_frequencies.setText(frequencies)
         }
-        if(gain != 0) {
-            edit_gain.setText(gain.toString())
-        }
 
         button_save.setOnClickListener {
             val intent = Intent()
 
             val nameStr = edit_name.text.toString()
             val frequenciesStr = edit_frequencies.text.toString()
-            val gainStr = edit_gain.text.toString()
-            if(TextUtils.isEmpty(gainStr)){
+            if(TextUtils.isEmpty(nameStr) || TextUtils.isEmpty(frequenciesStr)){
                 setResult(Activity.RESULT_CANCELED, intent)
             } else {
-                val gainInt = gainStr.toInt()
                 intent.putExtra("id", id)
                 intent.putExtra("name", nameStr)
                 intent.putExtra("frequencies", frequenciesStr)
-                intent.putExtra("gain", gainInt)
+                intent.putExtra("gain", gain)
                 intent.putExtra("type", "save")
                 setResult(Activity.RESULT_OK, intent)
             }
@@ -52,15 +47,13 @@ class NewGainActivity:AppCompatActivity() {
 
             val nameStr = edit_name.text.toString()
             val frequenciesStr = edit_frequencies.text.toString()
-            val gainStr = edit_gain.text.toString()
-            if(TextUtils.isEmpty(gainStr)){
+            if(TextUtils.isEmpty(nameStr) || TextUtils.isEmpty(frequenciesStr)){
                 setResult(Activity.RESULT_CANCELED, intent)
             } else {
-                val gainInt = gainStr.toInt()
                 intent.putExtra("id", id)
                 intent.putExtra("name", nameStr)
                 intent.putExtra("frequencies", frequenciesStr)
-                intent.putExtra("gain", gainInt)
+                intent.putExtra("gain", gain)
                 intent.putExtra("type", "delete")
                 setResult(Activity.RESULT_OK, intent)
             }

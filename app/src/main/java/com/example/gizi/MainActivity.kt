@@ -1,7 +1,10 @@
 package com.example.gizi
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.Menu
@@ -16,16 +19,19 @@ import com.example.gizi.database.SoundControlViewModel
 import androidx.lifecycle.ViewModelProviders
 import com.example.gizi.database.Gain
 import android.widget.Toast
-import androidx.databinding.DataBindingUtil
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.ItemTouchHelper
-import com.example.gizi.database.Setting
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.example.gizi.lib.SoundControl
 
 class MainActivity : AppCompatActivity() {
+
+    private val PERMISSION_CODE = 1234
 
     private var adapter:GainListAdapter?= null
     private var mSoundControlViewModel:SoundControlViewModel? = null
     private var onOffFlag: Boolean = true
+
+    private val sCtrl = SoundControl()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,37 +52,55 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(Intent(this, NewGainActivity::class.java), 1111)
         }
 
-        mSoundControlViewModel!!.getAllGains().observe(this, Observer {
-            adapter!!.setGains(it)
-        })
-
         val switchNr = findViewById<Switch>(R.id.switchNr)
         val switchNrTranportation = findViewById<Switch>(R.id.switchNrTransportation)
         var isSwitchInitiated = false
+
+        mSoundControlViewModel!!.getAllGains().observe(this, Observer {
+            sCtrl.setCutOff(it)
+            adapter!!.setGains(it)
+        })
+
         mSoundControlViewModel!!.getSetting().observe(this, Observer {
             if (!isSwitchInitiated) {
-                switchNr.isChecked = it[0].mNr
-                switchNrTranportation.isChecked = it[0].mNrTranportation   
+                switchNr.isChecked = it.mNr
+                sCtrl.setNr(it.mNr)
+                switchNrTranportation.isChecked = it.mNrTranportation
             }
             isSwitchInitiated = true
         })
+
         switchNr.setOnCheckedChangeListener { buttonView, isChecked ->
-            mSoundControlViewModel!!.switchNr()
+            if (isSwitchInitiated){
+                mSoundControlViewModel!!.switchNr(isChecked)
+                sCtrl.setNr(isChecked)
+            }
         }
         switchNrTranportation.setOnCheckedChangeListener { buttonView, isChecked ->
-            mSoundControlViewModel!!.switchNrTranportation()
+            if (isSwitchInitiated) {
+                mSoundControlViewModel!!.switchNrTransportation(isChecked)
+            }
         }
 
         val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
         onOffButton.setOnClickListener {
             if (onOffFlag) {
+                checkPermission()
+                sCtrl.start()
                 onOffButton.setImageResource(R.drawable.ic_pause_circle_outline_200dp)
             } else {
+                sCtrl.stop()
                 onOffButton.setImageResource(R.drawable.ic_play_circle_outline_200dp)
             }
             onOffFlag = !onOffFlag
         }
 
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val mAudioManager = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        sCtrl.setAudioManager(mAudioManager!!)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -109,6 +133,37 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(intent, 1111)
     }
 
+    private fun checkPermission() {
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(android.Manifest.permission.RECORD_AUDIO),
+                PERMISSION_CODE);
+        }
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.MODIFY_AUDIO_SETTINGS)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(android.Manifest.permission.MODIFY_AUDIO_SETTINGS),
+                PERMISSION_CODE);
+        }
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.BLUETOOTH)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(android.Manifest.permission.BLUETOOTH),
+                PERMISSION_CODE);
+        }
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.BLUETOOTH_ADMIN)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(android.Manifest.permission.BLUETOOTH_ADMIN),
+                PERMISSION_CODE);
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == 1111 && resultCode == Activity.RESULT_OK){
@@ -116,7 +171,7 @@ class MainActivity : AppCompatActivity() {
             val id:Int = data!!.getIntExtra("id", 0)
             val name: String = data.getStringExtra("name")
             val frequencies: String = data.getStringExtra("frequencies")
-            val gainInt: Int = data.getIntExtra("gain", 0)
+            val gainInt: Int = data.getIntExtra("gain", 50)
             val gain = Gain(id, name, frequencies, gainInt)
 
             if (type=="save"){
@@ -128,7 +183,29 @@ class MainActivity : AppCompatActivity() {
             } else if (type=="delete"){
                 mSoundControlViewModel!!.deleteGain(gain)
             }
+        }
+    }
 
+    override fun onRequestPermissionsResult(requestCode: Int,
+                                            permissions: Array<String>, grantResults: IntArray) {
+        when (requestCode) {
+            PERMISSION_CODE -> {
+                // If request is cancelled, the result arrays are empty.
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return
+            }
+
+            // Add other 'when' lines to check for other
+            // permissions this app might request.
+            else -> {
+                // Ignore all other requests.
+            }
         }
     }
 }

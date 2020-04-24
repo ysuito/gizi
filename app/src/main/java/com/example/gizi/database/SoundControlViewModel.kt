@@ -7,7 +7,7 @@ import androidx.lifecycle.LiveData
 class SoundControlViewModel(application: Application) : AndroidViewModel(application) {
     private var mRepository:SoundControlRepository = SoundControlRepository(application)
     private var mAllGains:LiveData<List<Gain>>
-    private var mSetting:LiveData<List<Setting>>
+    private var mSetting:LiveData<Setting>
 
     init {
         mAllGains = mRepository.getAllGains()
@@ -34,7 +34,7 @@ class SoundControlViewModel(application: Application) : AndroidViewModel(applica
         mRepository.updateGain(gain)
     }
 
-    fun getSetting():LiveData<List<Setting>>{
+    fun getSetting():LiveData<Setting>{
         return mSetting;
     }
 
@@ -54,20 +54,20 @@ class SoundControlViewModel(application: Application) : AndroidViewModel(applica
         mRepository.updateSetting(setting)
     }
 
-    fun switchNr(){
+    fun switchNr(new: Boolean){
         val newSetting = Setting(
-            mSetting.value!![0].id,
-            !mSetting.value!![0].mNr,
-            mSetting.value!![0].mNrTranportation
+            mSetting.value!!.id,
+            new,
+            mSetting.value!!.mNrTranportation
         )
         mRepository.updateSetting(newSetting)
     }
 
-    fun switchNrTranportation(){
+    fun switchNrTransportation(new: Boolean){
         val newSetting = Setting(
-            mSetting.value!![0].id,
-            mSetting.value!![0].mNr,
-            !mSetting.value!![0].mNrTranportation
+            mSetting.value!!.id,
+            new,
+            !mSetting.value!!.mNrTranportation
         )
         mRepository.updateSetting(newSetting)
     }

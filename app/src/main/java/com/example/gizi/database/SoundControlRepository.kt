@@ -7,7 +7,7 @@ import android.os.AsyncTask
 class SoundControlRepository(application: Application) {
     var soundControlDao: SoundControlDao
     var mAllGains:LiveData<List<Gain>>
-    var mSetting:LiveData<List<Setting>>
+    var mSetting:LiveData<Setting>
 
     init {
         val db:SoundControlRoomDatabase = SoundControlRoomDatabase.invoke(application)
@@ -58,7 +58,7 @@ class SoundControlRepository(application: Application) {
         }
     }
 
-    fun getSetting():LiveData<List<Setting>> {
+    fun getSetting():LiveData<Setting> {
         return mSetting
     }
 
