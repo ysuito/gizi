@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import android.os.AsyncTask
 
-@Database(entities = [Gain::class,Setting::class], version = 13, exportSchema = false)
+@Database(entities = [Gain::class,Setting::class], version = 16, exportSchema = false)
 abstract class SoundControlRoomDatabase:RoomDatabase() {
 
     abstract fun soundControlDao():SoundControlDao
@@ -42,7 +42,7 @@ abstract class SoundControlRoomDatabase:RoomDatabase() {
     private class PopulateDbAsync internal constructor(db: SoundControlRoomDatabase) : AsyncTask<Void, Void, Void>() {
 
         private val mDao: SoundControlDao = db.soundControlDao()
-        internal var gains = arrayOf(arrayOf("test1","1995-2005",60), arrayOf("test2","100-150,200-300",5), arrayOf("test3","30-40", 90))
+        internal var gains = arrayOf(arrayOf("人の声","100-1000",90))
 
         override fun doInBackground(vararg params: Void): Void? {
             // Start the app with a clean database every time.
@@ -56,7 +56,7 @@ abstract class SoundControlRoomDatabase:RoomDatabase() {
                 }
             }
             if (mDao.getAnySetting().isEmpty()){
-                val setting = Setting(0, true, false)
+                val setting = Setting(0, false, false, false)
                 mDao.insertSetting(setting)
             }
 

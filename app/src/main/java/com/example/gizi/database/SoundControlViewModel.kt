@@ -58,7 +58,8 @@ class SoundControlViewModel(application: Application) : AndroidViewModel(applica
         val newSetting = Setting(
             mSetting.value!!.id,
             new,
-            mSetting.value!!.mNrTranportation
+            mSetting.value!!.mNrTranportation,
+            mSetting.value!!.mBluetoothMic
         )
         mRepository.updateSetting(newSetting)
     }
@@ -67,7 +68,18 @@ class SoundControlViewModel(application: Application) : AndroidViewModel(applica
         val newSetting = Setting(
             mSetting.value!!.id,
             new,
-            !mSetting.value!!.mNrTranportation
+            !mSetting.value!!.mNrTranportation,
+            mSetting.value!!.mBluetoothMic
+        )
+        mRepository.updateSetting(newSetting)
+    }
+
+    fun switchBluetoothMic(new: Boolean) {
+        val newSetting = Setting(
+            mSetting.value!!.id,
+            mSetting.value!!.mNr,
+            mSetting.value!!.mNrTranportation,
+            new
         )
         mRepository.updateSetting(newSetting)
     }

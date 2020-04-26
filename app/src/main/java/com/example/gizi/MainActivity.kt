@@ -54,17 +54,24 @@ class MainActivity : AppCompatActivity() {
 
         val switchNr = findViewById<Switch>(R.id.switchNr)
         val switchNrTranportation = findViewById<Switch>(R.id.switchNrTransportation)
+        val switchBluetoothMic = findViewById<Switch>(R.id.switchBluetoothMic)
         var isSwitchInitiated = false
 
         mSoundControlViewModel!!.getAllGains().observe(this, Observer {
-            sCtrl.setCutOff(it)
-            adapter!!.setGains(it)
+            // データベース初期化時にnullがobserveされるためチェック
+            if (it != null) {
+                sCtrl.setCutOff(it)
+                adapter!!.setGains(it)
+            }
         })
 
         mSoundControlViewModel!!.getSetting().observe(this, Observer {
-            if (!isSwitchInitiated) {
+            // データベース初期化時にnullがobserveされるためチェック
+            if (!isSwitchInitiated && it != null) {
                 switchNr.isChecked = it.mNr
                 sCtrl.setNr(it.mNr)
+                switchBluetoothMic.isChecked = it.mBluetoothMic
+                sCtrl.setBluetoothMic(it.mBluetoothMic)
                 switchNrTranportation.isChecked = it.mNrTranportation
             }
             isSwitchInitiated = true
@@ -79,6 +86,12 @@ class MainActivity : AppCompatActivity() {
         switchNrTranportation.setOnCheckedChangeListener { buttonView, isChecked ->
             if (isSwitchInitiated) {
                 mSoundControlViewModel!!.switchNrTransportation(isChecked)
+            }
+        }
+        switchBluetoothMic.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isSwitchInitiated) {
+                mSoundControlViewModel!!.switchBluetoothMic(isChecked)
+                sCtrl.setBluetoothMic(isChecked)
             }
         }
 

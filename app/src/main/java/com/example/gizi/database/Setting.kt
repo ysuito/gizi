@@ -11,5 +11,7 @@ data class Setting(
     @ColumnInfo(name = "nr")
     val mNr:Boolean,
     @ColumnInfo(name = "nr_transportion")
-    val mNrTranportation:Boolean
+    val mNrTranportation:Boolean,
+    @ColumnInfo(name = "bluetooth_mic")
+    val mBluetoothMic: Boolean
 )

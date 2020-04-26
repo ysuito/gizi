@@ -50,6 +50,7 @@ class SoundControl() {
     private var isPlaying: Boolean = false
 
     private var mAudioManager: AudioManager? = null
+    private var bluetoothMic: Boolean? = null
 
     fun setAudioManager(audioManager: AudioManager) {
         mAudioManager = audioManager
@@ -60,6 +61,10 @@ class SoundControl() {
         if (isPlaying) {
             restart()
         }
+    }
+
+    fun setBluetoothMic(new: Boolean) {
+        bluetoothMic = new
     }
 
     fun setCutOff(new: List<Gain>) {
@@ -80,14 +85,15 @@ class SoundControl() {
     }
 
     fun start() {
-        //https://developer.android.com/reference/android/media/AudioManager#startBluetoothSco()
-        //https://developer.android.com/guide/topics/connectivity/bluetooth#Profiles
-//        mAudioManager!!.mode = AudioManager.MODE_IN_CALL
-//        mAudioManager!!.startBluetoothSco()
-//        mAudioManager!!.setBluetoothScoOn(true)
+        if (bluetoothMic!!) {
+            //https://developer.android.com/reference/android/media/AudioManager#startBluetoothSco()
+            //https://developer.android.com/guide/topics/connectivity/bluetooth#Profiles
 
-        println("isBluetoothScoAvailableOffCall " + mAudioManager!!.isBluetoothScoAvailableOffCall)
-        println("isBluetoothScoOn " + mAudioManager!!.isBluetoothScoOn)
+            mAudioManager!!.mode = AudioManager.MODE_IN_CALL
+            mAudioManager!!.startBluetoothSco()
+            mAudioManager!!.setBluetoothScoOn(true)
+
+        }
 
         audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
@@ -183,8 +189,9 @@ class SoundControl() {
         audioTrack!!.release()
         audioRecord!!.release()
         isPlaying = false
-
-//        mAudioManager!!.stopBluetoothSco()
+        if (bluetoothMic!!) {
+            mAudioManager!!.stopBluetoothSco()
+        }
     }
 
     fun restart() {
