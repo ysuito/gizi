@@ -4,13 +4,17 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.media.AudioManager
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ImageButton
 import android.widget.Switch
+import android.widget.TextView
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
@@ -32,6 +36,9 @@ class MainActivity : AppCompatActivity() {
     private var onOffFlag: Boolean = true
 
     private val sCtrl = SoundControl()
+
+    private var _latitude = 0.0     //　緯度フィールド
+    private var _longitude = 0.0    // 経度フィールド
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,6 +115,22 @@ class MainActivity : AppCompatActivity() {
             onOffFlag = !onOffFlag
         }
 
+        //LocationManagerオブジェクトを取得
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        // 位置情報が更新された際のリスナオブジェクトを生成
+        val locationListener = GPSLocationListener()
+
+        //位置情報の追跡を開始。
+        if (ActivityCompat.checkSelfPermission(
+                applicationContext,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED)  {
+            val permission = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            ActivityCompat.requestPermissions(this@MainActivity, permission,1000)
+            return
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
     }
 
     override fun onStart() {
@@ -199,26 +222,67 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
-        when (requestCode) {
-            PERMISSION_CODE -> {
-                // If request is cancelled, the result arrays are empty.
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
+    private val _tokyo_latitude = 35.680     //　東京緯度フィールド
+    private val _tokyo_longitude = 139.769    // 東京経度フィールド
+    private val _inside_latitude_range = 0.1  // 範囲内とする緯度の値
+    private val _inside_longitude_range = 0.1  // 範囲内とする経度の値
+    /**
+     * ロケーションリスナクラス。
+     */
+    private inner class GPSLocationListener: LocationListener {
+        override fun onLocationChanged(location: Location) {
+            //引数のLocationオブジェクトから緯度を取得
+            _latitude = location.latitude
+            _longitude = location.longitude
+
+            // 取得した緯度をテキストに表示
+            val latitudeText = findViewById<TextView>(R.id.latitudeValue)
+            latitudeText.text = _latitude.toString()
+            val langitudeText = findViewById<TextView>(R.id.longitudeValue)
+            langitudeText.text = _longitude.toString()
+
+            // 特定の範囲に入ったら表示
+            val insideText = findViewById<TextView>(R.id.inSideValue)
+            val minLatitude = _tokyo_latitude-_inside_latitude_range
+            val maxLatitude= _tokyo_latitude+_inside_latitude_range
+            val minLongitude = _tokyo_longitude-_inside_longitude_range
+            val maxLongitude= _tokyo_longitude+_inside_longitude_range
+
+            if ( minLatitude < _latitude  && _latitude < maxLatitude &&
+                minLongitude <  _longitude && _longitude < maxLongitude) {
+                insideText.text =getString(R.string.location_inside)
+            } else {
+                insideText.text =getString(R.string.location_outside)
+            }
+        }
+
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+        }
+
+        override fun onProviderEnabled(provider: String?) {
+        }
+
+        override fun onProviderDisabled(provider: String?) {
+        }
+    }
+
+
+    /**
+     * 表示されたパーミッションダイアログに対して、ユーザーが許可しないを選択した場合に呼び出されるメソッド。
+     */
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        //ACCESS_FINE_LOCATIONに対するパーミションダイアログでかつ許可を選択したなら…
+        if(requestCode == 1000 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            //LocationManagerオブジェクトを取得。
+            val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            //位置情報が更新された際のリスナオブジェクトを生成。
+            val locationListener = GPSLocationListener()
+            //再度ACCESS_FINE_LOCATIONの許可が下りていないかどうかのチェックをし、降りていないなら処理を中止。
+            if(ActivityCompat.checkSelfPermission(applicationContext, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return
             }
-
-            // Add other 'when' lines to check for other
-            // permissions this app might request.
-            else -> {
-                // Ignore all other requests.
-            }
+            //位置情報の追跡を開始。
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
         }
     }
 }
