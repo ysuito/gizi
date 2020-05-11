@@ -227,7 +227,7 @@ class MainActivity : AppCompatActivity() {
     private val _inside_latitude_range = 0.1  // 範囲内とする緯度の値
     private val _inside_longitude_range = 0.1  // 範囲内とする経度の値
     /**
-     * ロケーションリスナクラス。
+     * ロケーションリスナクラス。test
      */
     private inner class GPSLocationListener: LocationListener {
         override fun onLocationChanged(location: Location) {
