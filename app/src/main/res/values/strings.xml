@@ -14,6 +14,6 @@
     <string name="delete_all">すべて削除</string>
     <string name="latitude_title">緯度:</string>
     <string name="longitude_title">経度:</string>
-    <string name="location_inside">範囲内</string>
-    <string name="location_outside">範囲外</string>
+    <string name="station_name">駅名</string>
+    <string name="search_station">駅探索</string>
 </resources>

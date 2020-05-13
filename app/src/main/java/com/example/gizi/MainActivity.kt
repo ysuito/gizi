@@ -12,6 +12,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.ImageButton
 import android.widget.Switch
 import android.widget.TextView
@@ -39,6 +40,11 @@ class MainActivity : AppCompatActivity() {
 
     private var _latitude = 0.0     //　緯度フィールド
     private var _longitude = 0.0    // 経度フィールド
+    private val _inside_latitude_range = 0.1  // 範囲内とする緯度の値
+    private val _inside_longitude_range = 0.1  // 範囲内とする経度の値
+
+    // データベースヘルパーオブジェクト
+    private val _helper = DatabaseHelper(this@MainActivity)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -222,12 +228,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val _tokyo_latitude = 35.680     //　東京緯度フィールド
-    private val _tokyo_longitude = 139.769    // 東京経度フィールド
-    private val _inside_latitude_range = 0.1  // 範囲内とする緯度の値
-    private val _inside_longitude_range = 0.1  // 範囲内とする経度の値
+    override fun onDestroy() {
+        // ヘルパーオブジェクトの開放
+        _helper.close()
+        super.onDestroy()
+    }
+
+
     /**
-     * ロケーションリスナクラス。test2
+     * ロケーションリスナクラス。
      */
     private inner class GPSLocationListener: LocationListener {
         override fun onLocationChanged(location: Location) {
@@ -238,22 +247,8 @@ class MainActivity : AppCompatActivity() {
             // 取得した緯度をテキストに表示
             val latitudeText = findViewById<TextView>(R.id.latitudeValue)
             latitudeText.text = _latitude.toString()
-            val langitudeText = findViewById<TextView>(R.id.longitudeValue)
-            langitudeText.text = _longitude.toString()
-
-            // 特定の範囲に入ったら表示
-            val insideText = findViewById<TextView>(R.id.inSideValue)
-            val minLatitude = _tokyo_latitude-_inside_latitude_range
-            val maxLatitude= _tokyo_latitude+_inside_latitude_range
-            val minLongitude = _tokyo_longitude-_inside_longitude_range
-            val maxLongitude= _tokyo_longitude+_inside_longitude_range
-
-            if ( minLatitude < _latitude  && _latitude < maxLatitude &&
-                minLongitude <  _longitude && _longitude < maxLongitude) {
-                insideText.text =getString(R.string.location_inside)
-            } else {
-                insideText.text =getString(R.string.location_outside)
-            }
+            val longitudeText = findViewById<TextView>(R.id.longitudeValue)
+            longitudeText.text = _longitude.toString()
         }
 
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
@@ -266,6 +261,40 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    /**
+     * 駅名を取得するボタンのメソッド。
+     */
+    fun getStationonNameButtonClick(view: View) {
+
+        //データベースヘルパーオブジェクトからデータベース接続オブジェクトを取得。
+        val db = _helper.writableDatabase
+
+        // 特定の範囲に入ったら表示
+        val minLongitude = _longitude-_inside_longitude_range
+        val maxLongitude= _longitude+_inside_longitude_range
+        val minLatitude = _latitude-_inside_latitude_range
+        val maxLatitude= _latitude+_inside_latitude_range
+
+        // 主キーによる検索SQL文字列の用意
+        val sql ="SELECT * FROM stations" +
+                " WHERE ${minLongitude.toString()} < lon AND lon < ${maxLongitude.toString()}" +
+                " AND ${minLatitude.toString()} < lat AND lat < ${maxLatitude.toString()}"
+
+        // SQLの実行
+        val cursor = db.rawQuery(sql, null)
+        var note =""
+        //SQL実行の戻り値であるカーソルオブジェクトをループさせてデータベース内のデータを取得
+        while (cursor.moveToNext()){
+            // カラムのインデックス値を酒盗
+            val idxName = cursor.getColumnIndex("station_name")
+            //　カラムのインデックス値を元に実際のデータを取得
+            if(note != ""){ note +=", "}
+            note += cursor.getString(idxName)
+        }
+        val statonNameText = findViewById<TextView>(R.id.station_name)
+        statonNameText.text =note
+    }
 
     /**
      * 表示されたパーミッションダイアログに対して、ユーザーが許可しないを選択した場合に呼び出されるメソッド。
