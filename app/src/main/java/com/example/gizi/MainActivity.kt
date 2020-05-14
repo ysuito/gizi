@@ -280,7 +280,7 @@ class MainActivity : AppCompatActivity() {
         val minLatitude = _latitude-_inside_latitude_range
         val maxLatitude= _latitude+_inside_latitude_range
 
-        // 主キーによる検索SQL文字列の用意
+        // 経度緯度による範囲内の駅
         val sql ="SELECT * FROM stations" +
                 " WHERE ${minLongitude.toString()} < lon AND lon < ${maxLongitude.toString()}" +
                 " AND ${minLatitude.toString()} < lat AND lat < ${maxLatitude.toString()}"
@@ -394,7 +394,7 @@ class MainActivity : AppCompatActivity() {
         return stations
     }
 
-    //station配列にshelterインスタンスを格納
+    //stationinfoインスタンスを格納
     fun fetchCSV(line: Array<String>):StationInfo{
         val info = StationInfo(
             station_cd =  line[0].toLong(),
