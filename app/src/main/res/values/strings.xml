@@ -16,4 +16,5 @@
     <string name="longitude_title">経度:</string>
     <string name="station_name">駅名</string>
     <string name="search_station">駅探索</string>
+    <string name="station_csv_file">station20200316free.csv</string>
 </resources>
