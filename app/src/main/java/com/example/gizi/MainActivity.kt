@@ -27,9 +27,6 @@ import com.example.gizi.database.SoundControlViewModel
 import com.example.gizi.lib.SoundControl
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,7 +50,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        InitDB()
         setSupportActionBar(toolbar)
 
         mSoundControlViewModel = ViewModelProviders.of(this).get(SoundControlViewModel::class.java)
@@ -317,91 +313,5 @@ class MainActivity : AppCompatActivity() {
             //位置情報の追跡を開始。
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
         }
-    }
-
-    // 参考にしたCSV取得
-    // https://qiita.com/daichi77/items/375b5c50aa0d52f18beb
-    data class StationInfo (
-        //名称,概略
-        var station_cd: Long,
-        var station_name: String? = null,
-        var lon: Double = 0.0,
-        var lat: Double = 0.0
-    ){}
-
-    //1行目が格納される。
-    var column: Array<String> = emptyArray<String>()
-
-    /**
-     * DBの初期化
-     */
-    fun InitDB(){
-        //データベースヘルパーオブジェクトからデータベース接続オブジェクトを取得。
-        val db = _helper.writableDatabase
-
-        val sqlDelete = "DELETE FROM stations"
-        var stmt =db.compileStatement(sqlDelete)
-        // 削除の実行
-        stmt.executeUpdateDelete()
-
-
-        var stations = readCsv(getString(R.string.station_csv_file))
-
-        for ((index, station) in stations.withIndex()) {
-            // インサート用SQL文字列の用意
-            val sqlInsert = "INSERT INTO stations (_id, station_cd, station_name, lon, lat) VALUES(?, ?, ?, ?, ?)"
-
-            // SQK文字列を元にプリペアドスレートメント取得
-            var stat = db.compileStatement(sqlInsert)
-
-            // 変数のバイド
-            stat.bindLong(1,index.toLong())
-            stat.bindLong(2,station.station_cd)
-            stat.bindString(3,station.station_name)
-            stat.bindDouble(4,station.lon)
-            stat.bindDouble(5,station.lat)
-
-            // インサートの実行
-            stat.executeInsert()
-        }
-    }
-
-    //assetsからCSV情報を持ってくる
-    fun readCsv(filename: String):Array<StationInfo>{
-        var stations: Array<StationInfo> = emptyArray()
-
-        try {
-            val file = resources.assets.open(filename)
-            val fileReader = BufferedReader(InputStreamReader(file))
-            var i: Int = 0
-            fileReader.forEachLine{
-                if (it.isNotBlank()) {
-                    if (i == 0) {
-                        //1行目だけ別の配列に読み取る。
-                        column = it.split(",").toTypedArray()
-                    } else {
-                        //2行目以降
-                        val line = it.split(",").toTypedArray()
-                        stations += fetchCSV(line)
-                    }
-                }
-                i++;
-            }
-        }catch (e: IOException) {
-            //例外処理
-            print(e)
-        }
-        return stations
-    }
-
-    //stationinfoインスタンスを格納
-    fun fetchCSV(line: Array<String>):StationInfo{
-        val info = StationInfo(
-            station_cd =  line[0].toLong(),
-            station_name = line[2],
-            lon = line[9].toDouble(),
-            lat = line[10].toDouble()
-        )
-        return  info
     }
 }
