@@ -8,7 +8,9 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.media.AudioManager
+import android.os.AsyncTask
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -27,6 +29,12 @@ import com.example.gizi.database.SoundControlViewModel
 import com.example.gizi.lib.SoundControl
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : AppCompatActivity() {
 
@@ -294,6 +302,9 @@ class MainActivity : AppCompatActivity() {
         }
         val statonNameText = findViewById<TextView>(R.id.station_name)
         statonNameText.text =note
+
+        val receiver = OdptInfoReceiver()
+        receiver.execute("https://api.odpt.org/api/v4/odpt:Train?acl")
     }
 
     /**
@@ -312,6 +323,96 @@ class MainActivity : AppCompatActivity() {
             }
             //位置情報の追跡を開始。
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
+        }
+    }
+
+
+    /**
+     * 非同期でAPIデータを取得するクラス。
+     */
+    private inner class OdptInfoReceiver(vararg params: String): AsyncTask<String, String, String>() {
+
+        /**
+         * バックグラウンドで実行される処理（API実行）
+         */
+        override fun doInBackground(vararg params: String): String {
+            //可変長引数の1個目(インデックス0)を取得。これが都市ID
+            val apikey =  getString(R.string.api_key)
+
+            val target_api = params[0]
+
+            //API keyを使って接続URL文字列を作成。
+            //val urlStr = target_api + ":consumerKey=${apikey}"
+            // 仮のURL
+            val urlStr ="http://weather.livedoor.com/forecast/webservice/json/v1?city=280010"
+
+            //URLオブジェクトを生成。
+            val url = URL(urlStr)
+            //URLオブジェクトからHttpURLConnectionオブジェクトを取得。
+            val con = url.openConnection() as HttpURLConnection
+            //http接続メソッドを設定。
+            con.requestMethod = "GET"
+
+            //以下タイムアウトを設定する場合のコード。
+			con.connectTimeout = 1000
+			con.readTimeout = 1000
+
+            //接続。
+            con.connect()
+
+            //以下HTTPステータスコードを取得する場合のコード。
+			val resCode = con.responseCode
+			Log.i("OdptInfoReceiver", "Response Code is ${resCode}")
+
+            //HttpURLConnectionオブジェクトからレスポンスデータを取得。天気情報が格納されている。
+            val stream = con.inputStream
+            //レスポンスデータであるInputStreamオブジェクトを文字列(JSON文字列)に変換。
+            val result = is2String(stream)
+            //HttpURLConnectionオブジェクトを解放。
+            con.disconnect()
+            //InputStreamオブジェクトを解放。
+            stream.close()
+
+            //JSON文字列を返す。
+            return result
+        }
+
+        /**
+         * API処理結果をUIに反映される処理
+         */
+        override fun onPostExecute(result: String) {
+            //JSON文字列からJSONObjectオブジェクトを生成。これをルートJSONオブジェクトとする。
+            val rootJSON = JSONObject(result)
+            //ルートJSON直下の「description」JSONオブジェクトを取得。
+            val descriptionJSON = rootJSON.getJSONObject("description")
+            //「description」プロパティ直下の「text」文字列(天気概況文)を取得。
+            val desc = descriptionJSON.getString("text")
+            //ルートJSON直下の「forecasts」JSON配列を取得。
+            val forecasts = rootJSON.getJSONArray("forecasts")
+            //「forecasts」JSON配列のひとつ目(インデックス0)のJSONオブジェクトを取得。
+            val forecastNow = forecasts.getJSONObject(0)
+            //「forecasts」ひとつ目のJSONオブジェクトから「telop」文字列(天気)を取得。
+            val telop = forecastNow.getString("telop")
+
+            print(telop)
+        }
+
+        /**
+         * InputStreamオブジェクトを文字列に変換するメソッド。変換文字コードはUTF-8。
+         *
+         * @param stream 変換対象のInputStreamオブジェクト。
+         * @return 変換された文字列。
+         */
+        private fun is2String(stream: InputStream): String {
+            val sb = StringBuilder()
+            val reader = BufferedReader(InputStreamReader(stream, "UTF-8"))
+            var line = reader.readLine()
+            while(line != null) {
+                sb.append(line)
+                line = reader.readLine()
+            }
+            reader.close()
+            return sb.toString()
         }
     }
 }

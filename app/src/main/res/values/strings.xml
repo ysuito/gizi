@@ -18,4 +18,5 @@
     <string name="search_station">駅探索</string>
     <string name="station_csv_file">station20200316free.csv</string>
     <string name="join_csv_file">join20200306.csv</string>
+    <string name="api_key">aaaaaaaa</string>
 </resources>
