@@ -29,6 +29,7 @@ import com.example.gizi.database.SoundControlViewModel
 import com.example.gizi.lib.SoundControl
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStream
@@ -342,9 +343,7 @@ class MainActivity : AppCompatActivity() {
             val target_api = params[0]
 
             //API keyを使って接続URL文字列を作成。
-            //val urlStr = target_api + ":consumerKey=${apikey}"
-            // 仮のURL
-            val urlStr ="http://weather.livedoor.com/forecast/webservice/json/v1?city=280010"
+            val urlStr = target_api + ":consumerKey=${apikey}"
 
             //URLオブジェクトを生成。
             val url = URL(urlStr)
@@ -382,19 +381,29 @@ class MainActivity : AppCompatActivity() {
          */
         override fun onPostExecute(result: String) {
             //JSON文字列からJSONObjectオブジェクトを生成。これをルートJSONオブジェクトとする。
-            val rootJSON = JSONObject(result)
-            //ルートJSON直下の「description」JSONオブジェクトを取得。
-            val descriptionJSON = rootJSON.getJSONObject("description")
-            //「description」プロパティ直下の「text」文字列(天気概況文)を取得。
-            val desc = descriptionJSON.getString("text")
-            //ルートJSON直下の「forecasts」JSON配列を取得。
-            val forecasts = rootJSON.getJSONArray("forecasts")
-            //「forecasts」JSON配列のひとつ目(インデックス0)のJSONオブジェクトを取得。
-            val forecastNow = forecasts.getJSONObject(0)
-            //「forecasts」ひとつ目のJSONオブジェクトから「telop」文字列(天気)を取得。
-            val telop = forecastNow.getString("telop")
+            val arrayJSON = JSONArray(result)
+            val rootJSON  = arrayJSON.getJSONObject(0)
 
-            print(telop)
+            //ルートJSON直下の「description」JSONオブジェクトを取得。
+            val id = rootJSON.getString("@id")
+            val typevalue = rootJSON.getString("@type")
+            val dcdate = rootJSON.getString("dc:date")
+            val context = rootJSON.getString("@context")
+            val dctvalid = rootJSON.getString("dct:valid")
+            val odptdelay = rootJSON.getString("odpt:delay")
+            val owlsameAs = rootJSON.getString("owl:sameAs")
+            val odptrailway = rootJSON.getString("odpt:railway")
+            val odptoperator = rootJSON.getString("odpt:operator")
+            val odpttoStation = rootJSON.getString("odpt:toStation")
+            val odpttrainType = rootJSON.getString("odpt:trainType")
+            val odpttrainOwner = rootJSON.getString("odpt:trainOwner")
+            // 消えた？
+          //  val odptviaRailway = rootJSON.getJSONArray("odpt:viaRailway")
+            val odptfromStation = rootJSON.getString("odpt:fromStation")
+            val odpttrainNumber = rootJSON.getString("odpt:trainNumber")
+            val odptoriginStation = rootJSON.getJSONArray("odpt:originStation")
+            val odptrailDirection = rootJSON.getString("odpt:railDirection")
+            val odptdestinationStation = rootJSON.getString("odpt:destinationStation")
         }
 
         /**
