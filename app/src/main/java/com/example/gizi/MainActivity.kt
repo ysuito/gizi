@@ -30,7 +30,6 @@ import com.example.gizi.lib.SoundControl
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import org.json.JSONArray
-import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -305,7 +304,7 @@ class MainActivity : AppCompatActivity() {
         statonNameText.text =note
 
         val receiver = OdptInfoReceiver()
-        receiver.execute("https://api.odpt.org/api/v4/odpt:Train?acl")
+        receiver.execute("https://api.odpt.org/api/v4/odpt:Train","odpt:fromStation=odpt.Station:Toei.Asakusa.Magome")
     }
 
     /**
@@ -339,11 +338,16 @@ class MainActivity : AppCompatActivity() {
         override fun doInBackground(vararg params: String): String {
             //可変長引数の1個目(インデックス0)を取得。これが都市ID
             val apikey =  getString(R.string.api_key)
-
-            val target_api = params[0]
+            var target_api =params[0] + "?"
+            for (i in params.indices) {
+                // 初回以外がパラメータなので追加
+                if (i > 0) {
+                    target_api+=params[i] + "&"
+                }
+            }
 
             //API keyを使って接続URL文字列を作成。
-            val urlStr = target_api + ":consumerKey=${apikey}"
+            val urlStr = target_api + "acl:consumerKey=${apikey}"
 
             //URLオブジェクトを生成。
             val url = URL(urlStr)
@@ -382,28 +386,21 @@ class MainActivity : AppCompatActivity() {
         override fun onPostExecute(result: String) {
             //JSON文字列からJSONObjectオブジェクトを生成。これをルートJSONオブジェクトとする。
             val arrayJSON = JSONArray(result)
-            val rootJSON  = arrayJSON.getJSONObject(0)
 
-            //ルートJSON直下の「description」JSONオブジェクトを取得。
-            val id = rootJSON.getString("@id")
-            val typevalue = rootJSON.getString("@type")
-            val dcdate = rootJSON.getString("dc:date")
-            val context = rootJSON.getString("@context")
-            val dctvalid = rootJSON.getString("dct:valid")
-            val odptdelay = rootJSON.getString("odpt:delay")
-            val owlsameAs = rootJSON.getString("owl:sameAs")
-            val odptrailway = rootJSON.getString("odpt:railway")
-            val odptoperator = rootJSON.getString("odpt:operator")
-            val odpttoStation = rootJSON.getString("odpt:toStation")
-            val odpttrainType = rootJSON.getString("odpt:trainType")
-            val odpttrainOwner = rootJSON.getString("odpt:trainOwner")
-            // 消えた？
-          //  val odptviaRailway = rootJSON.getJSONArray("odpt:viaRailway")
-            val odptfromStation = rootJSON.getString("odpt:fromStation")
-            val odpttrainNumber = rootJSON.getString("odpt:trainNumber")
-            val odptoriginStation = rootJSON.getJSONArray("odpt:originStation")
-            val odptrailDirection = rootJSON.getString("odpt:railDirection")
-            val odptdestinationStation = rootJSON.getString("odpt:destinationStation")
+            for (i in 0..arrayJSON!!.length() - 1) {
+                val currentJSON = arrayJSON.getJSONObject(i)
+                //各種データを取得
+                val id = currentJSON.getString("@id")
+                val dcdate = currentJSON.getString("dc:date")       // データ生成日時
+                val datevalid = currentJSON.getString("dct:valid")   //データ保証期限
+                val operator = currentJSON.getString("odpt:operator")   //運行会社を表すID
+                val trailway = currentJSON.getString("odpt:railway")     // 鉄道路線を表すID
+                val trailDirection = currentJSON.getString("odpt:railDirection") //進行方向を表すID
+                val trainNumber = currentJSON.getString("odpt:trainNumber") // 列車番号
+                val odpttrainType = currentJSON.getString("odpt:trainType") // 列車種別
+                val toStation = currentJSON.getString("odpt:toStation")     // 列車が向かっている駅を表すID
+                // toStationがnull だと停止中
+            }
         }
 
         /**
