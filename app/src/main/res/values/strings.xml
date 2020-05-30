@@ -15,8 +15,8 @@
     <string name="latitude_title">緯度:</string>
     <string name="longitude_title">経度:</string>
     <string name="station_name">駅名</string>
-    <string name="search_station">駅探索</string>
+    <string name="search_train">周辺列車探索</string>
     <string name="station_csv_file">station20200316free.csv</string>
     <string name="join_csv_file">join20200306.csv</string>
-    <string name="api_key">testtoken</string>
+    <string name="api_key">apitoken</string>
 </resources>

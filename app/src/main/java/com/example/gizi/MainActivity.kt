@@ -271,9 +271,23 @@ class MainActivity : AppCompatActivity() {
 
 
     /**
-     * 駅名を取得するボタンのメソッド。
+     * 周辺列車情報を取得するボタンのメソッド。
      */
-    fun getStationonNameButtonClick(view: View) {
+    fun getTrainInfoButtonClick(view: View) {
+        val stationNameList = getStationonNameListInCurrentVicinity()
+        if (stationNameList.size > 0){
+            val param = stationNameList.joinToString(separator = ",")
+
+            val receiver = OdptStationInfoReceiver()
+            receiver.execute("dc:title=$param")
+        }
+    }
+
+
+    /**
+     * 周辺の駅名の一覧を取得するメソッド。
+     */
+    fun getStationonNameListInCurrentVicinity():List<String> {
 
         //データベースヘルパーオブジェクトからデータベース接続オブジェクトを取得。
         val db = _helper.writableDatabase
@@ -291,20 +305,17 @@ class MainActivity : AppCompatActivity() {
 
         // SQLの実行
         val cursor = db.rawQuery(sql, null)
-        var note =""
+        val namelist: MutableList<String> = mutableListOf()
         //SQL実行の戻り値であるカーソルオブジェクトをループさせてデータベース内のデータを取得
         while (cursor.moveToNext()){
             // カラムのインデックス値を酒盗
             val idxName = cursor.getColumnIndex("station_name")
-            //　カラムのインデックス値を元に実際のデータを取得
-            if(note != ""){ note +=", "}
-            note += cursor.getString(idxName)
-        }
-        val statonNameText = findViewById<TextView>(R.id.station_name)
-        statonNameText.text =note
 
-        val receiver = OdptInfoReceiver()
-        receiver.execute("https://api.odpt.org/api/v4/odpt:Train","odpt:fromStation=odpt.Station:Toei.Asakusa.Magome")
+            // 駅名保存
+            namelist.add(cursor.getString(idxName))
+        }
+        // 重複を削除して戻す
+        return namelist.distinct()
     }
 
     /**
@@ -328,27 +339,56 @@ class MainActivity : AppCompatActivity() {
 
 
     /**
-     * 非同期でAPIデータを取得するクラス。
+     * 駅情報オープンデータを非同期でAPIデータを取得するクラス。
      */
-    private inner class OdptInfoReceiver(vararg params: String): AsyncTask<String, String, String>() {
+    private inner class OdptStationInfoReceiver(vararg params: String): AsyncTask<String, String, String>() {
+
+        val targetURL:String = "https://api.odpt.org/api/v4/odpt:Station"
 
         /**
          * バックグラウンドで実行される処理（API実行）
          */
         override fun doInBackground(vararg params: String): String {
-            //可変長引数の1個目(インデックス0)を取得。これが都市ID
             val apikey =  getString(R.string.api_key)
-            var target_api =params[0] + "?"
+            var target_api = "$targetURL?"
             for (i in params.indices) {
-                // 初回以外がパラメータなので追加
-                if (i > 0) {
-                    target_api+=params[i] + "&"
-                }
+                target_api+=params[i] + "&"
             }
-
             //API keyを使って接続URL文字列を作成。
             val urlStr = target_api + "acl:consumerKey=${apikey}"
+            return getWebJsonData(urlStr)
+        }
 
+        /**
+         * API処理結果を受けて実行する処理
+         */
+        override fun onPostExecute(result: String) {
+            //JSON文字列からJSONObjectオブジェクトを生成。これをルートJSONオブジェクトとする。
+            val arrayJSON = JSONArray(result)
+            val stationNames: MutableList<String> = mutableListOf()
+            for (i in 0..arrayJSON!!.length() - 1) {
+                val currentJSON = arrayJSON.getJSONObject(i)
+                //各種データを取得
+                val stationName = currentJSON.getString("owl:sameAs")
+                stationNames.add(stationName)
+            }
+            if(stationNames.size >0){
+                val param = stationNames.joinToString(separator = ",")
+                val receiver = OdptTrainInfoReceiver()
+                receiver.execute("odpt:fromStation=$param")
+            }else{
+                val statonNameText = findViewById<TextView>(R.id.train_name)
+                statonNameText.text ="駅情報なし"
+            }
+        }
+
+        /**
+         * URlからWEB情報(JSON)取得するメソッド
+         *
+         * @param urlStr 対象URL
+         * @return 取得JSON内容
+         */
+        private fun getWebJsonData(urlStr: String):String{
             //URLオブジェクトを生成。
             val url = URL(urlStr)
             //URLオブジェクトからHttpURLConnectionオブジェクトを取得。
@@ -357,15 +397,15 @@ class MainActivity : AppCompatActivity() {
             con.requestMethod = "GET"
 
             //以下タイムアウトを設定する場合のコード。
-			con.connectTimeout = 1000
-			con.readTimeout = 1000
+            con.connectTimeout = 1000
+            con.readTimeout = 1000
 
             //接続。
             con.connect()
 
             //以下HTTPステータスコードを取得する場合のコード。
-			val resCode = con.responseCode
-			Log.i("OdptInfoReceiver", "Response Code is ${resCode}")
+            val resCode = con.responseCode
+            Log.i("getWebData", "Response Code is ${resCode}")
 
             //HttpURLConnectionオブジェクトからレスポンスデータを取得。天気情報が格納されている。
             val stream = con.inputStream
@@ -381,26 +421,108 @@ class MainActivity : AppCompatActivity() {
         }
 
         /**
+         * InputStreamオブジェクトを文字列に変換するメソッド。変換文字コードはUTF-8。
+         *
+         * @param stream 変換対象のInputStreamオブジェクト。
+         * @return 変換された文字列。
+         */
+        private fun is2String(stream: InputStream): String {
+            val sb = StringBuilder()
+            val reader = BufferedReader(InputStreamReader(stream, "UTF-8"))
+            var line = reader.readLine()
+            while(line != null) {
+                sb.append(line)
+                line = reader.readLine()
+            }
+            reader.close()
+            return sb.toString()
+        }
+    }
+
+
+
+    /**
+     * 列車オープンデータを非同期でAPIデータを取得するクラス。
+     */
+    private inner class OdptTrainInfoReceiver(vararg params: String): AsyncTask<String, String, String>() {
+
+        val targetURL:String = "https://api.odpt.org/api/v4/odpt:Train"
+
+        /**
+         * バックグラウンドで実行される処理（API実行）
+         */
+        override fun doInBackground(vararg params: String): String {
+            val apikey =  getString(R.string.api_key)
+            var target_api = "$targetURL?"
+            for (i in params.indices) {
+                target_api+=params[i] + "&"
+            }
+            //API keyを使って接続URL文字列を作成。
+            val urlStr = target_api + "acl:consumerKey=${apikey}"
+            return getWebJsonData(urlStr)
+        }
+
+        /**
          * API処理結果をUIに反映される処理
          */
         override fun onPostExecute(result: String) {
             //JSON文字列からJSONObjectオブジェクトを生成。これをルートJSONオブジェクトとする。
             val arrayJSON = JSONArray(result)
 
+            val trainNumbers: MutableList<String> = mutableListOf()
             for (i in 0..arrayJSON!!.length() - 1) {
                 val currentJSON = arrayJSON.getJSONObject(i)
                 //各種データを取得
-                val id = currentJSON.getString("@id")
-                val dcdate = currentJSON.getString("dc:date")       // データ生成日時
-                val datevalid = currentJSON.getString("dct:valid")   //データ保証期限
-                val operator = currentJSON.getString("odpt:operator")   //運行会社を表すID
-                val trailway = currentJSON.getString("odpt:railway")     // 鉄道路線を表すID
-                val trailDirection = currentJSON.getString("odpt:railDirection") //進行方向を表すID
-                val trainNumber = currentJSON.getString("odpt:trainNumber") // 列車番号
-                val odpttrainType = currentJSON.getString("odpt:trainType") // 列車種別
                 val toStation = currentJSON.getString("odpt:toStation")     // 列車が向かっている駅を表すID
-                // toStationがnull だと停止中
+                if (toStation != "null"){
+                    val trainNumber = currentJSON.getString("odpt:trainNumber") // 列車番号
+                    trainNumbers.add(trainNumber)
+                }
             }
+            var note = trainNumbers.joinToString(separator = ",")
+            if(note ==""){
+                note = "列車情報なし"
+            }
+            val statonNameText = findViewById<TextView>(R.id.train_name)
+            statonNameText.text =note
+        }
+
+        /**
+         * URlからWEB情報(JSON)取得するメソッド
+         *
+         * @param urlStr 対象URL
+         * @return 取得JSON内容
+         */
+        private fun getWebJsonData(urlStr: String):String{
+            //URLオブジェクトを生成。
+            val url = URL(urlStr)
+            //URLオブジェクトからHttpURLConnectionオブジェクトを取得。
+            val con = url.openConnection() as HttpURLConnection
+            //http接続メソッドを設定。
+            con.requestMethod = "GET"
+
+            //以下タイムアウトを設定する場合のコード。
+            con.connectTimeout = 1000
+            con.readTimeout = 1000
+
+            //接続。
+            con.connect()
+
+            //以下HTTPステータスコードを取得する場合のコード。
+            val resCode = con.responseCode
+            Log.i("getWebData", "Response Code is ${resCode}")
+
+            //HttpURLConnectionオブジェクトからレスポンスデータを取得。天気情報が格納されている。
+            val stream = con.inputStream
+            //レスポンスデータであるInputStreamオブジェクトを文字列(JSON文字列)に変換。
+            val result = is2String(stream)
+            //HttpURLConnectionオブジェクトを解放。
+            con.disconnect()
+            //InputStreamオブジェクトを解放。
+            stream.close()
+
+            //JSON文字列を返す。
+            return result
         }
 
         /**
