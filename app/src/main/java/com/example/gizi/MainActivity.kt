@@ -10,10 +10,10 @@ import android.location.LocationManager
 import android.media.AudioManager
 import android.os.AsyncTask
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.ImageButton
 import android.widget.Switch
 import android.widget.TextView
@@ -50,6 +50,9 @@ class MainActivity : AppCompatActivity() {
     private var _longitude = 0.0    // 経度フィールド
     private val _inside_latitude_range = 0.01  // 範囲内とする緯度の値
     private val _inside_longitude_range = 0.01  // 範囲内とする経度の値
+
+    private val handler = Handler()
+    private var getTrainRunnable: Runnable? = null
 
     // データベースヘルパーオブジェクト
     private val _helper = DatabaseHelper(this@MainActivity)
@@ -145,6 +148,28 @@ class MainActivity : AppCompatActivity() {
             return
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
+
+        // Switchに、状態変更イベントを追加
+        val enabledSwitch = findViewById<Switch>(R.id.enableGetTrainInfoSwitch)
+        enabledSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if(isChecked){
+                getTrainRunnable = Runnable {
+                    val stationNameList = getStationonNameListInCurrentVicinity()
+                    if (stationNameList.size > 0){
+                        val param = stationNameList.joinToString(separator = ",")
+                        val receiver = OdptStationInfoReceiver()
+                        receiver.execute("dc:title=$param")
+                    }
+                    handler.postDelayed(getTrainRunnable, 10000)
+                }
+                handler.post(getTrainRunnable)
+            }else{
+                if (getTrainRunnable !=null){
+                    handler.removeCallbacks(getTrainRunnable)
+                    getTrainRunnable =null
+                }
+            }
+        }
     }
 
     override fun onStart() {
@@ -266,20 +291,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onProviderDisabled(provider: String?) {
-        }
-    }
-
-
-    /**
-     * 周辺列車情報を取得するボタンのメソッド。
-     */
-    fun getTrainInfoButtonClick(view: View) {
-        val stationNameList = getStationonNameListInCurrentVicinity()
-        if (stationNameList.size > 0){
-            val param = stationNameList.joinToString(separator = ",")
-
-            val receiver = OdptStationInfoReceiver()
-            receiver.execute("dc:title=$param")
         }
     }
 

@@ -140,19 +140,16 @@
                 android:layout_height="50dp"
                 android:layout_weight="0.5"
                 android:maxLines="1" />
-
         </LinearLayout>
-
-        <Button
-            android:id="@+id/getTrainButton"
+        <Switch
+            android:id="@+id/enableGetTrainInfoSwitch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
             android:layout_weight="1"
-            android:text="@string/search_train"
-            android:onClick="getTrainInfoButtonClick"
+            android:text="@string/search_train_onoff"
+            android:showText="true"
             app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
             app:layout_constraintTop_toTopOf="@+id/onOffButton"
-            tools:layout_editor_absoluteX="0dp" />
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
