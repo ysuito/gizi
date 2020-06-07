@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
 
     private var adapter:GainListAdapter?= null
     private var mSoundControlViewModel:SoundControlViewModel? = null
-    private var onOffFlag: Boolean = true
+    private var isOffFlag: Boolean = true
 
     private val sCtrl = SoundControl()
 
@@ -121,7 +121,7 @@ class MainActivity : AppCompatActivity() {
 
         val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
         onOffButton.setOnClickListener {
-            if (onOffFlag) {
+            if (isOffFlag) {
                 checkPermission()
                 sCtrl.start()
                 onOffButton.setImageResource(R.drawable.ic_pause_circle_outline_200dp)
@@ -129,9 +129,8 @@ class MainActivity : AppCompatActivity() {
                 sCtrl.stop()
                 onOffButton.setImageResource(R.drawable.ic_play_circle_outline_200dp)
             }
-            onOffFlag = !onOffFlag
+            isOffFlag = !isOffFlag
         }
-
         //LocationManagerオブジェクトを取得
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
@@ -390,6 +389,10 @@ class MainActivity : AppCompatActivity() {
             }else{
                 val statonNameText = findViewById<TextView>(R.id.train_name)
                 statonNameText.text ="駅情報なし"
+                if(isOffFlag==false){
+                    val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
+                    onOffButton.callOnClick()
+                }
             }
         }
 
@@ -491,8 +494,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             var note = trainNumbers.joinToString(separator = ",")
+            val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
             if(note ==""){
                 note = "列車情報なし"
+                if(isOffFlag==false){
+                    onOffButton.callOnClick()
+                }
+            }else{
+                if(isOffFlag){
+                    onOffButton.callOnClick()
+                }
             }
             val statonNameText = findViewById<TextView>(R.id.train_name)
             statonNameText.text =note
