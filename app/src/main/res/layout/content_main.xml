@@ -98,58 +98,61 @@
             app:layout_constraintTop_toBottomOf="@+id/textView4"
             tools:listitem="@layout/recyclerview_item" />
 
-        <LinearLayout
-            android:id="@+id/linearLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:text="@string/latitude_title" />
-
-            <TextView
-                android:id="@+id/latitudeValue"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:layout_weight="0.5"
-                android:maxLines="1" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:text="@string/longitude_title" />
-
-            <TextView
-                android:id="@+id/longitudeValue"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:maxLines="1" />
-
-            <TextView
-                android:id="@+id/train_name"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_weight="0.5"
-                android:maxLines="1" />
-        </LinearLayout>
-        <Switch
-            android:id="@+id/enableGetTrainInfoSwitch"
+        <TextView
+            android:id="@+id/textView5"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/search_train_onoff"
-            android:showText="true"
-            app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
-            app:layout_constraintTop_toTopOf="@+id/onOffButton"
+            android:text="@string/latitude_title"
+            app:layout_constraintStart_toStartOf="@+id/recyclerview"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            />
+
+        <TextView
+            android:id="@+id/latitudeValue"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:maxLines="1"
+            app:layout_constraintLeft_toRightOf="@+id/textView5"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            tools:layout_editor_absoluteX="32dp" />
+
+        <TextView
+            android:id="@+id/textView6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
+            android:text="@string/longitude_title"
+            app:layout_constraintLeft_toRightOf="@+id/latitudeValue"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            />
+
+        <TextView
+            android:id="@+id/longitudeValue"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:maxLines="1"
+            app:layout_constraintLeft_toRightOf="@+id/textView6"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            />
+        <TextView
+            android:id="@+id/textView7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
+            android:text="@string/train_name"
+            app:layout_constraintLeft_toRightOf="@+id/longitudeValue"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            />
+        <TextView
+            android:id="@+id/train_name"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="0.5"
+            android:maxLines="1"
+            app:layout_constraintLeft_toRightOf="@+id/textView7"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

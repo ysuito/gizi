@@ -46,6 +46,8 @@ class MainActivity : AppCompatActivity() {
 
     private val sCtrl = SoundControl()
 
+    private var curGains = listOf<Gain>()
+
     private var _latitude = 0.0     //　緯度フィールド
     private var _longitude = 0.0    // 経度フィールド
     private val _inside_latitude_range = 0.01  // 範囲内とする緯度の値
@@ -86,6 +88,7 @@ class MainActivity : AppCompatActivity() {
             if (it != null) {
                 sCtrl.setCutOff(it)
                 adapter!!.setGains(it)
+                curGains = it
             }
         })
 
@@ -109,6 +112,35 @@ class MainActivity : AppCompatActivity() {
         }
         switchNrTranportation.setOnCheckedChangeListener { buttonView, isChecked ->
             if (isSwitchInitiated) {
+                val name: String = "公共交通機関騒音"
+                val frequencies: String = "100-800"
+                val gainInt: Int = 0
+                if (isChecked==true){
+                    val gain = Gain(0, name, frequencies, gainInt)
+                    mSoundControlViewModel!!.insertGain(gain)
+                    getTrainRunnable = Runnable {
+                        val stationNameList = getStationonNameListInCurrentVicinity()
+                        if (stationNameList.size > 0){
+                            val param = stationNameList.joinToString(separator = ",")
+                            val receiver = OdptStationInfoReceiver()
+                            receiver.execute("dc:title=$param")
+                        }
+                        handler.postDelayed(getTrainRunnable, 10000)
+                    }
+                    handler.post(getTrainRunnable)
+                } else {
+                    // delete train noise gain
+                    for (n in curGains) {
+                        if (n.mName=="公共交通機関騒音") {
+                            val gain = Gain(n.id, name, frequencies, gainInt)
+                            mSoundControlViewModel!!.deleteGain(gain)
+                        }
+                    }
+                    if (getTrainRunnable !=null){
+                        handler.removeCallbacks(getTrainRunnable)
+                        getTrainRunnable =null
+                    }
+                }
                 mSoundControlViewModel!!.switchNrTransportation(isChecked)
             }
         }
@@ -148,27 +180,6 @@ class MainActivity : AppCompatActivity() {
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
 
-        // Switchに、状態変更イベントを追加
-        val enabledSwitch = findViewById<Switch>(R.id.enableGetTrainInfoSwitch)
-        enabledSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
-            if(isChecked){
-                getTrainRunnable = Runnable {
-                    val stationNameList = getStationonNameListInCurrentVicinity()
-                    if (stationNameList.size > 0){
-                        val param = stationNameList.joinToString(separator = ",")
-                        val receiver = OdptStationInfoReceiver()
-                        receiver.execute("dc:title=$param")
-                    }
-                    handler.postDelayed(getTrainRunnable, 10000)
-                }
-                handler.post(getTrainRunnable)
-            }else{
-                if (getTrainRunnable !=null){
-                    handler.removeCallbacks(getTrainRunnable)
-                    getTrainRunnable =null
-                }
-            }
-        }
     }
 
     override fun onStart() {
