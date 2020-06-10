@@ -466,8 +466,8 @@ class MainActivity : AppCompatActivity() {
     /**
      * 公共交通機関ノイズ低減を開始する関数
      */
-    private fun startPublicTransportationNoiseDeduction(stationList: List<String>){
-        var note = stationList.joinToString(separator = ",")
+    private fun startPublicTransportationNoiseDeduction(trainList: List<String>){
+        var note = trainList.joinToString(separator = ",")
         val statonNameText = findViewById<TextView>(R.id.train_name)
         statonNameText.text =note
         if(isOffFlag){
