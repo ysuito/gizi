@@ -141,18 +141,36 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
-            android:text="@string/train_name"
-            app:layout_constraintLeft_toRightOf="@+id/longitudeValue"
-            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            android:text="最寄り駅:"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView5"
             />
         <TextView
-            android:id="@+id/train_name"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
+            android:id="@+id/near_station"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:maxLines="1"
             app:layout_constraintLeft_toRightOf="@+id/textView7"
-            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            app:layout_constraintTop_toBottomOf="@+id/textView5"
+            />
+        <TextView
+            android:id="@+id/textView8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
+            android:text="@string/train_name"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView7"
+            />
+        <TextView
+            android:id="@+id/train_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:maxLines="1"
+            app:layout_constraintLeft_toRightOf="@+id/textView8"
+            app:layout_constraintTop_toBottomOf="@+id/textView7"
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

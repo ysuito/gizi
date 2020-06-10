@@ -120,11 +120,14 @@ class MainActivity : AppCompatActivity() {
                     mSoundControlViewModel!!.insertGain(gain)
                     getTrainRunnable = Runnable {
                         val stationNameList = getStationonNameListInCurrentVicinity()
+                        val stationText = findViewById<TextView>(R.id.near_station)
                         if (stationNameList.size > 0){
                             val param = stationNameList.joinToString(separator = ",")
+                            stationText.text = param
                             val receiver = OdptStationInfoReceiver()
                             receiver.execute("dc:title=$param")
                         }else {
+                            stationText.text = "DB駅情報なし"
                             stopPublicTransportationNoiseDeduction("DB駅情報なし");
                         }
                         handler.postDelayed(getTrainRunnable, 10000)
@@ -523,7 +526,8 @@ class MainActivity : AppCompatActivity() {
                 //各種データを取得
                 val toStation = currentJSON.getString("odpt:toStation")     // 列車が向かっている駅を表すID
                 if (toStation != "null"){
-                    val trainNumber = currentJSON.getString("odpt:trainNumber") // 列車番号
+//                    val trainNumber = currentJSON.getString("odpt:trainNumber") // 列車番号
+                    val trainNumber = currentJSON.getString("owl:sameAs") // 列車番号
                     trainNumbers.add(trainNumber)
                 }
             }
