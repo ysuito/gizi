@@ -124,6 +124,8 @@ class MainActivity : AppCompatActivity() {
                             val param = stationNameList.joinToString(separator = ",")
                             val receiver = OdptStationInfoReceiver()
                             receiver.execute("dc:title=$param")
+                        }else {
+                            stopPublicTransportationNoiseDeduction("DB駅情報なし");
                         }
                         handler.postDelayed(getTrainRunnable, 10000)
                     }
@@ -181,6 +183,7 @@ class MainActivity : AppCompatActivity() {
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
 
     }
+
 
     override fun onStart() {
         super.onStart()
@@ -398,12 +401,7 @@ class MainActivity : AppCompatActivity() {
                 val receiver = OdptTrainInfoReceiver()
                 receiver.execute("odpt:fromStation=$param")
             }else{
-                val statonNameText = findViewById<TextView>(R.id.train_name)
-                statonNameText.text ="駅情報なし"
-                if(isOffFlag==false){
-                    val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
-                    onOffButton.callOnClick()
-                }
+                stopPublicTransportationNoiseDeduction("API駅情報なし");
             }
         }
 
@@ -465,6 +463,31 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    /**
+     * 公共交通機関ノイズ低減を開始する関数
+     */
+    private fun startPublicTransportationNoiseDeduction(stationList: List<String>){
+        var note = stationList.joinToString(separator = ",")
+        val statonNameText = findViewById<TextView>(R.id.train_name)
+        statonNameText.text =note
+        if(isOffFlag){
+            val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
+            onOffButton.callOnClick()
+        }
+    }
+
+    /**
+     * 公共交通機関ノイズ低減を開停止する関数
+     */
+    private fun stopPublicTransportationNoiseDeduction(reason: String){
+        val statonNameText = findViewById<TextView>(R.id.train_name)
+        statonNameText.text =reason
+        if(isOffFlag==false){
+            val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
+            onOffButton.callOnClick()
+        }
+    }
+
 
     /**
      * 列車オープンデータを非同期でAPIデータを取得するクラス。
@@ -504,20 +527,11 @@ class MainActivity : AppCompatActivity() {
                     trainNumbers.add(trainNumber)
                 }
             }
-            var note = trainNumbers.joinToString(separator = ",")
-            val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
-            if(note ==""){
-                note = "列車情報なし"
-                if(isOffFlag==false){
-                    onOffButton.callOnClick()
-                }
+            if(trainNumbers.count() >0){
+                startPublicTransportationNoiseDeduction(trainNumbers);
             }else{
-                if(isOffFlag){
-                    onOffButton.callOnClick()
-                }
+                stopPublicTransportationNoiseDeduction("列車情報なし");
             }
-            val statonNameText = findViewById<TextView>(R.id.train_name)
-            statonNameText.text =note
         }
 
         /**
