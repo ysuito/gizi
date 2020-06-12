@@ -14,6 +14,9 @@ interface SoundControlDao {
     @Query("SELECT * from gain_table ORDER BY id ASC")
     fun getAllGains():LiveData<List<Gain>>
 
+    @Query("SELECT * from gain_table WHERE name = :name ORDER BY id ASC")
+    fun queryGains(name:String):List<Gain>
+
     @Query("SELECT * from gain_table LIMIT 1")
     fun getAnyGain():Array<Gain>
 
@@ -43,4 +46,14 @@ interface SoundControlDao {
 
     @Update
     fun updateSetting(setting: Setting)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertStation(mStation:Station)
+
+    @Query("SELECT * from station_table LIMIT 1")
+    fun getAnyStation():List<Station>
+
+    @Query("SELECT * from station_table WHERE :minLng < lng AND lng < :maxLng AND :minLat < lat AND lat < :maxLat ORDER BY ((:lat-lat)*(:lat-lat)+(:lng-lng)*(:lng-lng)) LIMIT :limit")
+    fun getNearStations(lng:Double,lat:Double,minLng:Double,
+                        maxLng:Double,minLat:Double,maxLat:Double,limit:Int):List<Station>
 }

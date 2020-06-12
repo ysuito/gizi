@@ -5,9 +5,9 @@ import androidx.lifecycle.LiveData
 import android.os.AsyncTask
 
 class SoundControlRepository(application: Application) {
-    var soundControlDao: SoundControlDao
-    var mAllGains:LiveData<List<Gain>>
-    var mSetting:LiveData<Setting>
+    private var soundControlDao: SoundControlDao
+    private var mAllGains:LiveData<List<Gain>>
+    private var mSetting:LiveData<Setting>
 
     init {
         val db:SoundControlRoomDatabase = SoundControlRoomDatabase.invoke(application)
@@ -18,6 +18,10 @@ class SoundControlRepository(application: Application) {
 
     fun getAllGains():LiveData<List<Gain>>{
         return mAllGains
+    }
+
+    fun queryGains(name: String):List<Gain>{
+        return soundControlDao.queryGains(name)
     }
 
     fun insertGain(gain:Gain){
@@ -62,18 +66,6 @@ class SoundControlRepository(application: Application) {
         return mSetting
     }
 
-    fun insertSetting(setting:Setting){
-        InsertSettingAsyncTask(soundControlDao, AppConstants.DBOperations.INSERT).execute(setting)
-    }
-
-    fun deleteAllSetting(){
-        DeleteAllSettingAsyncTask(soundControlDao).execute()
-    }
-
-    fun deleteSetting(setting: Setting){
-        InsertSettingAsyncTask(soundControlDao, AppConstants.DBOperations.DELETE).execute(setting)
-    }
-
     fun updateSetting(setting: Setting) {
         InsertSettingAsyncTask(soundControlDao, AppConstants.DBOperations.UPDATE).execute(setting)
     }
@@ -98,6 +90,11 @@ class SoundControlRepository(application: Application) {
             mAsyncTaskDao.deleteAllSettings()
             return null
         }
+    }
+
+    fun getNearStations(lng:Double,lat:Double,minLng:Double,
+                        maxLng:Double,minLat:Double,maxLat:Double,limit:Int):List<Station>{
+        return soundControlDao.getNearStations(lng,lat,minLng,maxLng,minLat,maxLat,limit)
     }
 
 }

@@ -19,5 +19,10 @@
     <string name="search_train_onoff">周辺列車探索</string>
     <string name="station_csv_file">station20200316free.csv</string>
     <string name="join_csv_file">join20200306.csv</string>
+    <string name="public_transport_gain_name">公共交通機関騒音</string>
+    <string name="public_transport_gain_freq">100-800</string>
+    <string name="msg_station_not_found_in_db">DB駅情報なし</string>
+    <string name="station_api_url">https://api.odpt.org/api/v4/odpt:Station</string>
+    <string name="train_api_url">https://api.odpt.org/api/v4/odpt:Train</string>
     <string name="api_key">apitoken</string>
 </resources>

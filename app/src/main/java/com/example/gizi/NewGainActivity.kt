@@ -8,7 +8,6 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
-import android.widget.SpinnerAdapter
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.new_gain_activity.*
 
@@ -74,8 +73,8 @@ class NewGainActivity:AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
-                edit_name.setText(noises.get(position).get("name"))
-                edit_frequencies.setText(noises.get(position).get("frequencies"))
+                edit_name.setText(noises[position]["name"])
+                edit_frequencies.setText(noises[position]["frequencies"])
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {

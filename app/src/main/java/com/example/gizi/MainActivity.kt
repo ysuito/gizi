@@ -1,5 +1,6 @@
 package com.example.gizi
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -9,6 +10,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.media.AudioManager
 import android.os.AsyncTask
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -18,6 +20,7 @@ import android.widget.ImageButton
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -38,27 +41,25 @@ import java.net.URL
 
 class MainActivity : AppCompatActivity() {
 
-    private val PERMISSION_CODE = 1234
+    private val permissionCode = 1234
 
     private var adapter:GainListAdapter?= null
     private var mSoundControlViewModel:SoundControlViewModel? = null
-    private var isOffFlag: Boolean = true
+    private var isOn: Boolean = false
 
     private val sCtrl = SoundControl()
 
-    private var curGains = listOf<Gain>()
-
     private var _latitude = 0.0     //　緯度フィールド
     private var _longitude = 0.0    // 経度フィールド
-    private val _inside_latitude_range = 0.01  // 範囲内とする緯度の値
-    private val _inside_longitude_range = 0.01  // 範囲内とする経度の値
+    private val insideLatitudeRange = 0.01  // 範囲内とする緯度の値
+    private val insideLongitudeRange = 0.01  // 範囲内とする経度の値
+
+    private val stationLimit = 3 // 最寄り駅として選定する数
 
     private val handler = Handler()
     private var getTrainRunnable: Runnable? = null
 
-    // データベースヘルパーオブジェクト
-    private val _helper = DatabaseHelper(this@MainActivity)
-
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -73,7 +74,6 @@ class MainActivity : AppCompatActivity() {
         recyclerview.setHasFixedSize(true)
         recyclerview.adapter = adapter
 
-
         fab.setOnClickListener {
             startActivityForResult(Intent(this, NewGainActivity::class.java), 1111)
         }
@@ -81,117 +81,101 @@ class MainActivity : AppCompatActivity() {
         val switchNr = findViewById<Switch>(R.id.switchNr)
         val switchNrTranportation = findViewById<Switch>(R.id.switchNrTransportation)
         val switchBluetoothMic = findViewById<Switch>(R.id.switchBluetoothMic)
-        var isSwitchInitiated = false
 
         mSoundControlViewModel!!.getAllGains().observe(this, Observer {
             // データベース初期化時にnullがobserveされるためチェック
             if (it != null) {
                 sCtrl.setCutOff(it)
                 adapter!!.setGains(it)
-                curGains = it
             }
         })
 
         mSoundControlViewModel!!.getSetting().observe(this, Observer {
             // データベース初期化時にnullがobserveされるためチェック
-            if (!isSwitchInitiated && it != null) {
+            if (it != null) {
                 switchNr.isChecked = it.mNr
                 sCtrl.setNr(it.mNr)
+
+                switchNrTranportation.isChecked = it.mNrTranportation
+                handleNrTransportation(it.mNrTranportation)
+
                 switchBluetoothMic.isChecked = it.mBluetoothMic
                 sCtrl.setBluetoothMic(it.mBluetoothMic)
-                switchNrTranportation.isChecked = it.mNrTranportation
             }
-            isSwitchInitiated = true
         })
 
-        switchNr.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isSwitchInitiated){
-                mSoundControlViewModel!!.switchNr(isChecked)
-                sCtrl.setNr(isChecked)
-            }
+        switchNr.setOnClickListener {
+            mSoundControlViewModel!!.switchNr()
         }
-        switchNrTranportation.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isSwitchInitiated) {
-                val name: String = "公共交通機関騒音"
-                val frequencies: String = "100-800"
-                val gainInt: Int = 0
-                if (isChecked==true){
-                    val gain = Gain(0, name, frequencies, gainInt)
-                    mSoundControlViewModel!!.insertGain(gain)
-                    getTrainRunnable = Runnable {
-                        val stationNameList = getStationonNameListInCurrentVicinity()
-                        val stationText = findViewById<TextView>(R.id.near_station)
-                        if (stationNameList.size > 0){
-                            val param = stationNameList.joinToString(separator = ",")
-                            stationText.text = param
-                            val receiver = OdptStationInfoReceiver()
-                            receiver.execute("dc:title=$param")
-                        }else {
-                            stationText.text = "DB駅情報なし"
-                            stopPublicTransportationNoiseDeduction("DB駅情報なし");
-                        }
-                        handler.postDelayed(getTrainRunnable, 10000)
-                    }
-                    handler.post(getTrainRunnable)
-                } else {
-                    // delete train noise gain
-                    for (n in curGains) {
-                        if (n.mName=="公共交通機関騒音") {
-                            val gain = Gain(n.id, name, frequencies, gainInt)
-                            mSoundControlViewModel!!.deleteGain(gain)
-                        }
-                    }
-                    if (getTrainRunnable !=null){
-                        handler.removeCallbacks(getTrainRunnable)
-                        getTrainRunnable =null
-                    }
-                }
-                mSoundControlViewModel!!.switchNrTransportation(isChecked)
-            }
+        switchNrTranportation.setOnClickListener {
+            mSoundControlViewModel!!.switchNrTransportation()
         }
-        switchBluetoothMic.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isSwitchInitiated) {
-                mSoundControlViewModel!!.switchBluetoothMic(isChecked)
-                sCtrl.setBluetoothMic(isChecked)
-            }
+        switchBluetoothMic.setOnClickListener {
+            mSoundControlViewModel!!.switchBluetoothMic()
         }
 
         val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
         onOffButton.setOnClickListener {
-            if (isOffFlag) {
-                checkPermission()
+            if (!isOn) {
                 sCtrl.start()
                 onOffButton.setImageResource(R.drawable.ic_pause_circle_outline_200dp)
             } else {
                 sCtrl.stop()
                 onOffButton.setImageResource(R.drawable.ic_play_circle_outline_200dp)
             }
-            isOffFlag = !isOffFlag
+            isOn = !isOn
         }
+
+        checkPermission()
+
         //LocationManagerオブジェクトを取得
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
         // 位置情報が更新された際のリスナオブジェクトを生成
         val locationListener = GPSLocationListener()
-
         //位置情報の追跡を開始。
-        if (ActivityCompat.checkSelfPermission(
-                applicationContext,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED)  {
-            val permission = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
-            ActivityCompat.requestPermissions(this@MainActivity, permission,1000)
-            return
-        }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
 
     }
 
+    private fun handleNrTransportation(start: Boolean) {
+        val name: String = getString(R.string.public_transport_gain_name)
+        val frequencies: String = getString(R.string.public_transport_gain_freq)
+        val gainInt = 0
+        // delete train noise gain
+        val dupGains = mSoundControlViewModel!!.queryGains(name)
+        for (n in dupGains) {
+            mSoundControlViewModel!!.deleteGain(n)
+        }
+        if (start){
+            val gain = Gain(0, name, frequencies, gainInt)
+            mSoundControlViewModel!!.insertGain(gain)
+            getTrainRunnable = Runnable {
+                val stationNameList = getStationNameListInCurrentVicinity()
+                val stationText = findViewById<TextView>(R.id.near_station)
+                if (stationNameList.isNotEmpty()){
+                    val param = stationNameList.joinToString(separator = ",")
+                    stationText.text = param
+                    val receiver = OdptStationInfoReceiver()
+                    receiver.execute("dc:title=$param")
+                }else {
+                    stationText.text = getString(R.string.msg_station_not_found_in_db)
+                    stopPublicTransportationNoiseReduction(getString(R.string.msg_station_not_found_in_db))
+                }
+                handler.postDelayed(getTrainRunnable!!, 10000)
+            }
+            handler.post(getTrainRunnable!!)
+        } else {
+            if (getTrainRunnable !=null){
+                handler.removeCallbacks(getTrainRunnable!!)
+                getTrainRunnable =null
+            }
+        }
+    }
 
     override fun onStart() {
         super.onStart()
         val mAudioManager = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        sCtrl.setAudioManager(mAudioManager!!)
+        sCtrl.setAudioManager(mAudioManager)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -230,38 +214,45 @@ class MainActivity : AppCompatActivity() {
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                 arrayOf(android.Manifest.permission.RECORD_AUDIO),
-                PERMISSION_CODE);
+                permissionCode)
         }
         if (ContextCompat.checkSelfPermission(this,
                 android.Manifest.permission.MODIFY_AUDIO_SETTINGS)
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                 arrayOf(android.Manifest.permission.MODIFY_AUDIO_SETTINGS),
-                PERMISSION_CODE);
+                permissionCode)
         }
         if (ContextCompat.checkSelfPermission(this,
                 android.Manifest.permission.BLUETOOTH)
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                 arrayOf(android.Manifest.permission.BLUETOOTH),
-                PERMISSION_CODE);
+                permissionCode)
         }
         if (ContextCompat.checkSelfPermission(this,
                 android.Manifest.permission.BLUETOOTH_ADMIN)
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                 arrayOf(android.Manifest.permission.BLUETOOTH_ADMIN),
-                PERMISSION_CODE);
+                permissionCode)
+        }
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                permissionCode)
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == 1111 && resultCode == Activity.RESULT_OK){
-            val type:String = data!!.getStringExtra("type")
-            val id:Int = data!!.getIntExtra("id", 0)
-            val name: String = data.getStringExtra("name")
-            val frequencies: String = data.getStringExtra("frequencies")
+            val type:String = data!!.getStringExtra("type")!!
+            val id:Int = data.getIntExtra("id", 0)
+            val name: String = data.getStringExtra("name")!!
+            val frequencies: String = data.getStringExtra("frequencies")!!
             val gainInt: Int = data.getIntExtra("gain", 50)
             val gain = Gain(id, name, frequencies, gainInt)
 
@@ -276,13 +267,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    override fun onDestroy() {
-        // ヘルパーオブジェクトの開放
-        _helper.close()
-        super.onDestroy()
-    }
-
 
     /**
      * ロケーションリスナクラス。
@@ -314,35 +298,25 @@ class MainActivity : AppCompatActivity() {
     /**
      * 周辺の駅名の一覧を取得するメソッド。
      */
-    fun getStationonNameListInCurrentVicinity():List<String> {
-
-        //データベースヘルパーオブジェクトからデータベース接続オブジェクトを取得。
-        val db = _helper.writableDatabase
+    @SuppressLint("Recycle")
+    private fun getStationNameListInCurrentVicinity():List<String> {
 
         // 特定の範囲に入ったら表示
-        val minLongitude = _longitude-_inside_longitude_range
-        val maxLongitude= _longitude+_inside_longitude_range
-        val minLatitude = _latitude-_inside_latitude_range
-        val maxLatitude= _latitude+_inside_latitude_range
+        val minLongitude = _longitude-insideLongitudeRange
+        val maxLongitude= _longitude+insideLongitudeRange
+        val minLatitude = _latitude-insideLatitudeRange
+        val maxLatitude= _latitude+insideLatitudeRange
 
-        // 経度緯度による範囲内の駅
-        val sql ="SELECT * FROM stations" +
-                " WHERE ${minLongitude.toString()} < lon AND lon < ${maxLongitude.toString()}" +
-                " AND ${minLatitude.toString()} < lat AND lat < ${maxLatitude.toString()}"
+        // 経度緯度による範囲内の駅(簡易的に平面距離で求めている)
+        val nearStations = mSoundControlViewModel!!.getNearStations(_latitude,_longitude,
+            minLongitude,maxLongitude,minLatitude,maxLatitude,stationLimit)
 
-        // SQLの実行
-        val cursor = db.rawQuery(sql, null)
-        val namelist: MutableList<String> = mutableListOf()
-        //SQL実行の戻り値であるカーソルオブジェクトをループさせてデータベース内のデータを取得
-        while (cursor.moveToNext()){
-            // カラムのインデックス値を酒盗
-            val idxName = cursor.getColumnIndex("station_name")
-
-            // 駅名保存
-            namelist.add(cursor.getString(idxName))
+        val nameList: MutableList<String> = mutableListOf()
+        for (station in nearStations) {
+            nameList.add(station.station_name)
         }
         // 重複を削除して戻す
-        return namelist.distinct()
+        return nameList.distinct()
     }
 
     /**
@@ -350,7 +324,7 @@ class MainActivity : AppCompatActivity() {
      */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         //ACCESS_FINE_LOCATIONに対するパーミションダイアログでかつ許可を選択したなら…
-        if(requestCode == 1000 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if(requestCode == permissionCode && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             //LocationManagerオブジェクトを取得。
             val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
             //位置情報が更新された際のリスナオブジェクトを生成。
@@ -364,25 +338,77 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * URlからWEB情報(JSON)取得するメソッド
+     *
+     * @param urlStr 対象URL
+     * @return 取得JSON内容
+     */
+    private fun getWebJsonData(urlStr: String):String{
+        //URLオブジェクトを生成。
+        val url = URL(urlStr)
+        //URLオブジェクトからHttpURLConnectionオブジェクトを取得。
+        val con = url.openConnection() as HttpURLConnection
+        //http接続メソッドを設定。
+        con.requestMethod = "GET"
+
+        //以下タイムアウトを設定する場合のコード。
+        con.connectTimeout = 1000
+        con.readTimeout = 1000
+
+        //接続。
+        con.connect()
+
+        //以下HTTPステータスコードを取得する場合のコード。
+        val resCode = con.responseCode
+        Log.i("getWebData", "Response Code is $resCode")
+
+        //HttpURLConnectionオブジェクトからレスポンスデータを取得。天気情報が格納されている。
+        val stream = con.inputStream
+        //レスポンスデータであるInputStreamオブジェクトを文字列(JSON文字列)に変換。
+        val result = is2String(stream)
+        //HttpURLConnectionオブジェクトを解放。
+        con.disconnect()
+        //InputStreamオブジェクトを解放。
+        stream.close()
+
+        //JSON文字列を返す。
+        return result
+    }
+
+    /**
+     * InputStreamオブジェクトを文字列に変換するメソッド。変換文字コードはUTF-8。
+     *
+     * @param stream 変換対象のInputStreamオブジェクト。
+     * @return 変換された文字列。
+     */
+    private fun is2String(stream: InputStream): String {
+        val sb = StringBuilder()
+        val reader = BufferedReader(InputStreamReader(stream, "UTF-8"))
+        var line = reader.readLine()
+        while(line != null) {
+            sb.append(line)
+            line = reader.readLine()
+        }
+        reader.close()
+        return sb.toString()
+    }
 
     /**
      * 駅情報オープンデータを非同期でAPIデータを取得するクラス。
      */
-    private inner class OdptStationInfoReceiver(vararg params: String): AsyncTask<String, String, String>() {
-
-        val targetURL:String = "https://api.odpt.org/api/v4/odpt:Station"
+    @SuppressLint("StaticFieldLeak")
+    private inner class OdptStationInfoReceiver : AsyncTask<String, String, String>() {
 
         /**
          * バックグラウンドで実行される処理（API実行）
          */
         override fun doInBackground(vararg params: String): String {
-            val apikey =  getString(R.string.api_key)
-            var target_api = "$targetURL?"
-            for (i in params.indices) {
-                target_api+=params[i] + "&"
-            }
+            val apiKey =  getString(R.string.api_key)
+            var targetApi = "${getString(R.string.station_api_url)}?"
+            targetApi += params.joinToString("&")
             //API keyを使って接続URL文字列を作成。
-            val urlStr = target_api + "acl:consumerKey=${apikey}"
+            val urlStr = targetApi + "&acl:consumerKey=${apiKey}"
             return getWebJsonData(urlStr)
         }
 
@@ -393,7 +419,7 @@ class MainActivity : AppCompatActivity() {
             //JSON文字列からJSONObjectオブジェクトを生成。これをルートJSONオブジェクトとする。
             val arrayJSON = JSONArray(result)
             val stationNames: MutableList<String> = mutableListOf()
-            for (i in 0..arrayJSON!!.length() - 1) {
+            for (i in 0 until arrayJSON.length()) {
                 val currentJSON = arrayJSON.getJSONObject(i)
                 //各種データを取得
                 val stationName = currentJSON.getString("owl:sameAs")
@@ -404,64 +430,8 @@ class MainActivity : AppCompatActivity() {
                 val receiver = OdptTrainInfoReceiver()
                 receiver.execute("odpt:fromStation=$param")
             }else{
-                stopPublicTransportationNoiseDeduction("API駅情報なし");
+                stopPublicTransportationNoiseReduction("API駅情報なし")
             }
-        }
-
-        /**
-         * URlからWEB情報(JSON)取得するメソッド
-         *
-         * @param urlStr 対象URL
-         * @return 取得JSON内容
-         */
-        private fun getWebJsonData(urlStr: String):String{
-            //URLオブジェクトを生成。
-            val url = URL(urlStr)
-            //URLオブジェクトからHttpURLConnectionオブジェクトを取得。
-            val con = url.openConnection() as HttpURLConnection
-            //http接続メソッドを設定。
-            con.requestMethod = "GET"
-
-            //以下タイムアウトを設定する場合のコード。
-            con.connectTimeout = 1000
-            con.readTimeout = 1000
-
-            //接続。
-            con.connect()
-
-            //以下HTTPステータスコードを取得する場合のコード。
-            val resCode = con.responseCode
-            Log.i("getWebData", "Response Code is ${resCode}")
-
-            //HttpURLConnectionオブジェクトからレスポンスデータを取得。天気情報が格納されている。
-            val stream = con.inputStream
-            //レスポンスデータであるInputStreamオブジェクトを文字列(JSON文字列)に変換。
-            val result = is2String(stream)
-            //HttpURLConnectionオブジェクトを解放。
-            con.disconnect()
-            //InputStreamオブジェクトを解放。
-            stream.close()
-
-            //JSON文字列を返す。
-            return result
-        }
-
-        /**
-         * InputStreamオブジェクトを文字列に変換するメソッド。変換文字コードはUTF-8。
-         *
-         * @param stream 変換対象のInputStreamオブジェクト。
-         * @return 変換された文字列。
-         */
-        private fun is2String(stream: InputStream): String {
-            val sb = StringBuilder()
-            val reader = BufferedReader(InputStreamReader(stream, "UTF-8"))
-            var line = reader.readLine()
-            while(line != null) {
-                sb.append(line)
-                line = reader.readLine()
-            }
-            reader.close()
-            return sb.toString()
         }
     }
 
@@ -469,11 +439,11 @@ class MainActivity : AppCompatActivity() {
     /**
      * 公共交通機関ノイズ低減を開始する関数
      */
-    private fun startPublicTransportationNoiseDeduction(trainList: List<String>){
-        var note = trainList.joinToString(separator = ",")
+    private fun startPublicTransportationNoiseReduction(trainList: List<String>){
+        val note = trainList.joinToString(separator = ",")
         val statonNameText = findViewById<TextView>(R.id.train_name)
         statonNameText.text =note
-        if(isOffFlag){
+        if(!isOn){
             val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
             onOffButton.callOnClick()
         }
@@ -482,10 +452,10 @@ class MainActivity : AppCompatActivity() {
     /**
      * 公共交通機関ノイズ低減を開停止する関数
      */
-    private fun stopPublicTransportationNoiseDeduction(reason: String){
+    private fun stopPublicTransportationNoiseReduction(reason: String){
         val statonNameText = findViewById<TextView>(R.id.train_name)
         statonNameText.text =reason
-        if(isOffFlag==false){
+        if(isOn){
             val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
             onOffButton.callOnClick()
         }
@@ -495,21 +465,18 @@ class MainActivity : AppCompatActivity() {
     /**
      * 列車オープンデータを非同期でAPIデータを取得するクラス。
      */
-    private inner class OdptTrainInfoReceiver(vararg params: String): AsyncTask<String, String, String>() {
-
-        val targetURL:String = "https://api.odpt.org/api/v4/odpt:Train"
+    @SuppressLint("StaticFieldLeak")
+    private inner class OdptTrainInfoReceiver : AsyncTask<String, String, String>() {
 
         /**
          * バックグラウンドで実行される処理（API実行）
          */
         override fun doInBackground(vararg params: String): String {
-            val apikey =  getString(R.string.api_key)
-            var target_api = "$targetURL?"
-            for (i in params.indices) {
-                target_api+=params[i] + "&"
-            }
+            val apiKey =  getString(R.string.api_key)
+            var targetApi = "${getString(R.string.train_api_url)}?"
+            targetApi += params.joinToString("&")
             //API keyを使って接続URL文字列を作成。
-            val urlStr = target_api + "acl:consumerKey=${apikey}"
+            val urlStr = targetApi + "&acl:consumerKey=${apiKey}"
             return getWebJsonData(urlStr)
         }
 
@@ -521,77 +488,20 @@ class MainActivity : AppCompatActivity() {
             val arrayJSON = JSONArray(result)
 
             val trainNumbers: MutableList<String> = mutableListOf()
-            for (i in 0..arrayJSON!!.length() - 1) {
+            for (i in 0 until arrayJSON.length()) {
                 val currentJSON = arrayJSON.getJSONObject(i)
                 //各種データを取得
                 val toStation = currentJSON.getString("odpt:toStation")     // 列車が向かっている駅を表すID
                 if (toStation != "null"){
-//                    val trainNumber = currentJSON.getString("odpt:trainNumber") // 列車番号
                     val trainNumber = currentJSON.getString("owl:sameAs") // 列車番号
                     trainNumbers.add(trainNumber)
                 }
             }
             if(trainNumbers.count() >0){
-                startPublicTransportationNoiseDeduction(trainNumbers);
+                startPublicTransportationNoiseReduction(trainNumbers)
             }else{
-                stopPublicTransportationNoiseDeduction("列車情報なし");
+                stopPublicTransportationNoiseReduction("列車情報なし")
             }
-        }
-
-        /**
-         * URlからWEB情報(JSON)取得するメソッド
-         *
-         * @param urlStr 対象URL
-         * @return 取得JSON内容
-         */
-        private fun getWebJsonData(urlStr: String):String{
-            //URLオブジェクトを生成。
-            val url = URL(urlStr)
-            //URLオブジェクトからHttpURLConnectionオブジェクトを取得。
-            val con = url.openConnection() as HttpURLConnection
-            //http接続メソッドを設定。
-            con.requestMethod = "GET"
-
-            //以下タイムアウトを設定する場合のコード。
-            con.connectTimeout = 1000
-            con.readTimeout = 1000
-
-            //接続。
-            con.connect()
-
-            //以下HTTPステータスコードを取得する場合のコード。
-            val resCode = con.responseCode
-            Log.i("getWebData", "Response Code is ${resCode}")
-
-            //HttpURLConnectionオブジェクトからレスポンスデータを取得。天気情報が格納されている。
-            val stream = con.inputStream
-            //レスポンスデータであるInputStreamオブジェクトを文字列(JSON文字列)に変換。
-            val result = is2String(stream)
-            //HttpURLConnectionオブジェクトを解放。
-            con.disconnect()
-            //InputStreamオブジェクトを解放。
-            stream.close()
-
-            //JSON文字列を返す。
-            return result
-        }
-
-        /**
-         * InputStreamオブジェクトを文字列に変換するメソッド。変換文字コードはUTF-8。
-         *
-         * @param stream 変換対象のInputStreamオブジェクト。
-         * @return 変換された文字列。
-         */
-        private fun is2String(stream: InputStream): String {
-            val sb = StringBuilder()
-            val reader = BufferedReader(InputStreamReader(stream, "UTF-8"))
-            var line = reader.readLine()
-            while(line != null) {
-                sb.append(line)
-                line = reader.readLine()
-            }
-            reader.close()
-            return sb.toString()
         }
     }
 }

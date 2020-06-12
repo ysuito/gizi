@@ -1,20 +1,15 @@
 package com.example.gizi.lib
 
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothHeadset
-import android.bluetooth.BluetoothProfile
-import android.bluetooth.BluetoothProfile.ServiceListener
-import android.content.Context
-import android.content.Context.AUDIO_SERVICE
 import android.media.*
 import android.media.AudioFormat.CHANNEL_OUT_MONO
 import android.media.AudioFormat.ENCODING_PCM_16BIT
-import androidx.core.content.ContextCompat.getSystemService
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.gizi.database.Gain
 import org.jtransforms.fft.DoubleFFT_1D
 import kotlin.math.max
 
-class SoundControl() {
+class SoundControl {
 
     // サンプリングレート (Hz)
     // 全デバイスサポート保障は44100のみ
@@ -37,9 +32,10 @@ class SoundControl() {
     // 要件2:デバイスの要求する最小値より大きくする必要がある
     private val audioBufferSizeInByte =
             max(oneFrameSizeInByte, // 適当に10フレーム分のバッファを持たせた
-                    android.media.AudioRecord.getMinBufferSize(samplingRate,
+                    AudioRecord.getMinBufferSize(samplingRate,
                             AudioFormat.CHANNEL_IN_MONO,
-                            AudioFormat.ENCODING_PCM_16BIT))
+                            ENCODING_PCM_16BIT
+                    ))
 
     private var audioTrack : AudioTrack? = null
     private var audioRecord : AudioRecord? = null
@@ -56,6 +52,7 @@ class SoundControl() {
         mAudioManager = audioManager
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun setNr(new: Boolean) {
         nrOn = new
         if (isPlaying) {
@@ -67,8 +64,9 @@ class SoundControl() {
         bluetoothMic = new
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun setCutOff(new: List<Gain>) {
-        var newCutOffs = mutableListOf<Map<String,Int>>()
+        val newCutOffs = mutableListOf<Map<String,Int>>()
         for (n in new) {
             val splited = n.mFrequencies.split(",")
             val gain = n.mGain
@@ -84,6 +82,7 @@ class SoundControl() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun start() {
         if (bluetoothMic!!) {
             //https://developer.android.com/reference/android/media/AudioManager#startBluetoothSco()
@@ -91,7 +90,7 @@ class SoundControl() {
 
             mAudioManager!!.mode = AudioManager.MODE_IN_CALL
             mAudioManager!!.startBluetoothSco()
-            mAudioManager!!.setBluetoothScoOn(true)
+            mAudioManager!!.isBluetoothScoOn = true
 
         }
 
@@ -109,19 +108,17 @@ class SoundControl() {
             .setBufferSizeInBytes(audioBufferSizeInByte)
             .build()
 
-        var audioSource : Int? = null
+        var audioSource = MediaRecorder.AudioSource.UNPROCESSED
 
         if (nrOn) {
             audioSource = MediaRecorder.AudioSource.DEFAULT
-        } else {
-            audioSource = MediaRecorder.AudioSource.UNPROCESSED
         }
 
         audioRecord = AudioRecord(
             audioSource, // 音声のソース
             samplingRate, // サンプリングレート
             AudioFormat.CHANNEL_IN_MONO, // チャネル設定. MONO and STEREO が全デバイスサポート保障
-            AudioFormat.ENCODING_PCM_16BIT, // PCM16が全デバイスサポート保障
+            ENCODING_PCM_16BIT, // PCM16が全デバイスサポート保障
             audioBufferSizeInByte) // バッファ
 
         // 音声データを幾つずつ処理するか( = 1フレームのデータの数)
@@ -145,15 +142,15 @@ class SoundControl() {
 
                 // フーリエ変換(FFT)の実行
                 // フーリエ変換(FFT)の実行
-                var data: DoubleArray = audioDataArray.map {it.toDouble()}.toDoubleArray()
+                val data: DoubleArray = audioDataArray.map {it.toDouble()}.toDoubleArray()
                 fft.realForward(data)
                 // data[0]は実数成分、data[1]は虚数成分～data[n]は実数成分、data[n+1}は虚数成分
                 // data[0]は実数成分、data[1]は虚数成分～data[n]は実数成分、data[n+1}は虚数成分
                 val coefficinet = samplingRate/audioDataArray.size/2
                 for (n in cutOffs) {
-                    val low = n.get("low")!!
-                    val high = n.get("high")!!
-                    val gain = n.get("gain")!! / 50
+                    val low = n["low"] ?: error("")
+                    val high = n["high"] ?: error("")
+                    val gain = (n["gain"] ?: error("")) / 50
                     for (it in low..high step coefficinet) {
                         if (it % coefficinet == 0) {
                             data[it/coefficinet] = data[it/coefficinet] * gain
@@ -194,7 +191,8 @@ class SoundControl() {
         }
     }
 
-    fun restart() {
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun restart() {
         stop()
         start()
     }

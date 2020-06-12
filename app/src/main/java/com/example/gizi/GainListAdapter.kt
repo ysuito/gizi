@@ -4,7 +4,6 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.RecyclerView
 import com.example.gizi.database.Gain
 import com.example.gizi.database.SoundControlViewModel
@@ -19,10 +18,6 @@ class GainListAdapter(val onClickListener: (Gain) -> Unit,
     fun setGains(mGains:List<Gain>){
         this.mGains = mGains
         notifyDataSetChanged()
-    }
-
-    fun getGainAtPosition(position: Int): Gain {
-        return mGains!![position]
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GainViewHolder {

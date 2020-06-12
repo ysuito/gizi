@@ -15,7 +15,11 @@ class SoundControlViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun getAllGains():LiveData<List<Gain>>{
-        return mAllGains;
+        return mAllGains
+    }
+
+    fun queryGains(name: String):List<Gain> {
+        return mRepository.queryGains(name)
     }
 
     fun insertGain(gain: Gain){
@@ -35,53 +39,42 @@ class SoundControlViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun getSetting():LiveData<Setting>{
-        return mSetting;
+        return mSetting
     }
 
-    fun insertSetting(setting: Setting){
-        mRepository.insertSetting(setting)
-    }
-
-    fun deleteAllSetting(){
-        mRepository.deleteAllSetting()
-    }
-
-    fun deleteSetting(setting: Setting){
-        mRepository.deleteSetting(setting)
-    }
-
-    fun updateSetting(setting: Setting){
-        mRepository.updateSetting(setting)
-    }
-
-    fun switchNr(new: Boolean){
+    fun switchNr(){
         val newSetting = Setting(
             mSetting.value!!.id,
-            new,
+            !mSetting.value!!.mNr,
             mSetting.value!!.mNrTranportation,
             mSetting.value!!.mBluetoothMic
         )
         mRepository.updateSetting(newSetting)
     }
 
-    fun switchNrTransportation(new: Boolean){
+    fun switchNrTransportation(){
         val newSetting = Setting(
             mSetting.value!!.id,
-            new,
+            mSetting.value!!.mNr,
             !mSetting.value!!.mNrTranportation,
             mSetting.value!!.mBluetoothMic
         )
         mRepository.updateSetting(newSetting)
     }
 
-    fun switchBluetoothMic(new: Boolean) {
+    fun switchBluetoothMic() {
         val newSetting = Setting(
             mSetting.value!!.id,
             mSetting.value!!.mNr,
             mSetting.value!!.mNrTranportation,
-            new
+            !mSetting.value!!.mBluetoothMic
         )
         mRepository.updateSetting(newSetting)
+    }
+
+    fun getNearStations(lng:Double,lat:Double,minLng:Double,
+                        maxLng:Double,minLat:Double,maxLat:Double,limit:Int):List<Station> {
+        return mRepository.getNearStations(lng,lat,minLng,maxLng,minLat,maxLat,limit)
     }
 
 }
