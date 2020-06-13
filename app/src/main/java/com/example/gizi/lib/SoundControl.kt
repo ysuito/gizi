@@ -48,6 +48,9 @@ class SoundControl {
     private var mAudioManager: AudioManager? = null
     private var bluetoothMic: Boolean? = null
 
+    private var isEarPlugMode = false
+    private var isFiltering = false
+
     fun setAudioManager(audioManager: AudioManager) {
         mAudioManager = audioManager
     }
@@ -55,19 +58,26 @@ class SoundControl {
     @RequiresApi(Build.VERSION_CODES.N)
     fun setNr(new: Boolean) {
         nrOn = new
-        if (isPlaying) {
-            restart()
+        if (isFiltering) {
+            startFiltering()
         }
     }
 
     fun setBluetoothMic(new: Boolean) {
         bluetoothMic = new
+        if (isFiltering) {
+            startFiltering()
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
     fun setCutOff(new: List<Gain>) {
+        isEarPlugMode = false
         val newCutOffs = mutableListOf<Map<String,Int>>()
         for (n in new) {
+            if (n.mName=="耳栓") {
+                isEarPlugMode = true
+            }
             val splited = n.mFrequencies.split(",")
             val gain = n.mGain
             for (s in splited) {
@@ -77,13 +87,13 @@ class SoundControl {
             }
         }
         cutOffs = newCutOffs
-        if (isPlaying) {
-            restart()
+        if (isFiltering) {
+            startFiltering()
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun start() {
+    fun startAudio() {
         if (bluetoothMic!!) {
             //https://developer.android.com/reference/android/media/AudioManager#startBluetoothSco()
             //https://developer.android.com/guide/topics/connectivity/bluetooth#Profiles
@@ -137,35 +147,39 @@ class SoundControl {
             // フレームごとの処理
             override fun onPeriodicNotification(recorder: AudioRecord) {
                 recorder.read(audioDataArray, 0, oneFrameDataCount) // 音声データ読込
-                // 好きに処理する
-                val fft = DoubleFFT_1D(audioDataArray.size.toLong())
+                if (!isFiltering) {
+                    audioTrack!!.write(audioDataArray, 0, audioDataArray.size)
+                } else if (!isEarPlugMode) {
+                    // 好きに処理する
+                    val fft = DoubleFFT_1D(audioDataArray.size.toLong())
 
-                // フーリエ変換(FFT)の実行
-                // フーリエ変換(FFT)の実行
-                val data: DoubleArray = audioDataArray.map {it.toDouble()}.toDoubleArray()
-                fft.realForward(data)
-                // data[0]は実数成分、data[1]は虚数成分～data[n]は実数成分、data[n+1}は虚数成分
-                // data[0]は実数成分、data[1]は虚数成分～data[n]は実数成分、data[n+1}は虚数成分
-                val coefficinet = samplingRate/audioDataArray.size/2
-                for (n in cutOffs) {
-                    val low = n["low"] ?: error("")
-                    val high = n["high"] ?: error("")
-                    val gain = (n["gain"] ?: error("")) / 50
-                    for (it in low..high step coefficinet) {
-                        if (it % coefficinet == 0) {
-                            data[it/coefficinet] = data[it/coefficinet] * gain
+                    // フーリエ変換(FFT)の実行
+                    // フーリエ変換(FFT)の実行
+                    val data: DoubleArray = audioDataArray.map {it.toDouble()}.toDoubleArray()
+                    fft.realForward(data)
+                    // data[0]は実数成分、data[1]は虚数成分～data[n]は実数成分、data[n+1}は虚数成分
+                    // data[0]は実数成分、data[1]は虚数成分～data[n]は実数成分、data[n+1}は虚数成分
+                    val coefficinet = samplingRate/audioDataArray.size/2
+                    for (n in cutOffs) {
+                        val low = n["low"] ?: error("")
+                        val high = n["high"] ?: error("")
+                        val gain = (n["gain"] ?: error("")) / 50
+                        for (it in low..high step coefficinet) {
+                            if (it % coefficinet == 0) {
+                                data[it/coefficinet] = data[it/coefficinet] * gain
+                            }
                         }
                     }
-                }
 //                var peakFq = data.indices.maxBy { data[it] }
 //                var peakVl = data.max()
 //                peakFq = peakFq!!.toInt() * coefficinet
 //                Log.d("MAXVOL", peakVl.toString())
 
-                // 逆フーリエ変換
-                // 逆フーリエ変換
-                fft.realInverse(data, true)
-                audioTrack!!.write(data.map {it.toShort()}.toShortArray(), 0, audioDataArray.size)
+                    // 逆フーリエ変換
+                    // 逆フーリエ変換
+                    fft.realInverse(data, true)
+                    audioTrack!!.write(data.map {it.toShort()}.toShortArray(), 0, audioDataArray.size)
+                }
             }
 
             // マーカータイミングの処理.
@@ -180,7 +194,7 @@ class SoundControl {
         isPlaying = true
     }
 
-    fun stop() {
+    fun stopAudio() {
         audioTrack!!.pause()
         audioRecord!!.stop()
         audioTrack!!.release()
@@ -191,9 +205,19 @@ class SoundControl {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun restart() {
-        stop()
-        start()
+    fun stopFiltering() {
+        isFiltering = false
+        if (audioTrack!=null) {
+            stopAudio()
+        }
+        startAudio()
+    }
+
+    fun startFiltering() {
+        isFiltering = true
+        if (audioTrack!=null) {
+            stopAudio()
+        }
+        startAudio()
     }
 }
