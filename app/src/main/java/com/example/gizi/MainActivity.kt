@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         mSoundControlViewModel!!.getSetting().observe(this, Observer {
             // データベース初期化時にnullがobserveされるためチェック
             if (it != null) {
+
                 switchNr.isChecked = it.mNr
                 sCtrl.setNr(it.mNr)
 
@@ -117,10 +118,10 @@ class MainActivity : AppCompatActivity() {
         val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
         onOffButton.setOnClickListener {
             if (!isOn) {
-                sCtrl.start()
+                sCtrl.startFiltering()
                 onOffButton.setImageResource(R.drawable.ic_pause_circle_outline_200dp)
             } else {
-                sCtrl.stop()
+                sCtrl.stopFiltering()
                 onOffButton.setImageResource(R.drawable.ic_play_circle_outline_200dp)
             }
             isOn = !isOn
@@ -444,7 +445,6 @@ class MainActivity : AppCompatActivity() {
         val statonNameText = findViewById<TextView>(R.id.train_name)
         statonNameText.text =note
         if(!isOn){
-            val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
             onOffButton.callOnClick()
         }
     }
@@ -456,7 +456,6 @@ class MainActivity : AppCompatActivity() {
         val statonNameText = findViewById<TextView>(R.id.train_name)
         statonNameText.text =reason
         if(isOn){
-            val onOffButton = findViewById<ImageButton>(R.id.onOffButton)
             onOffButton.callOnClick()
         }
     }
