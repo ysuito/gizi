@@ -58,10 +58,10 @@ class MainActivity : AppCompatActivity() {
     private val insideLatitudeRange = 0.01  // 範囲内とする緯度の値
     private val insideLongitudeRange = 0.01  // 範囲内とする経度の値
 
-    private val _hnd_geo_lat = 35.549404         // 羽田空港の代表緯度
-    private val _hnd_geo_long = 139.780118       // 羽田空港の代表経度
-    private val _hnd_insideRange = 0.05          // 範囲内とする緯度経度の値（暫定）
-    private val _minutes_required_for_arrival:Long = 10 // 到着に必要な時間(分)。到着予定時刻のこの時間の前からノイズキャンセラ実行
+    private val hanedaLatitude = 35.549404         // 羽田空港の代表緯度
+    private val hanedaLongitude = 139.780118       // 羽田空港の代表経度
+    private val hanedaInsideRange = 0.05          // 範囲内とする緯度経度の値（暫定）
+    private val minutesRequiredForArrival:Long = 10 // 到着に必要な時間(分)。到着予定時刻のこの時間の前からノイズキャンセラ実行
 
     private val stationLimit = 3 // 最寄り駅として選定する数
 
@@ -323,10 +323,10 @@ class MainActivity : AppCompatActivity() {
      * 羽田空港の雑音範囲内にいるか判定する
      */
     private fun isInsideHndNoise():Boolean{
-        val minLongitude = _hnd_geo_long-_hnd_insideRange
-        val maxLongitude= _hnd_geo_long+_hnd_insideRange
-        val minLatitude = _hnd_geo_lat-_hnd_insideRange
-        val maxLatitude= _hnd_geo_lat+_hnd_insideRange
+        val minLongitude = hanedaLongitude-hanedaInsideRange
+        val maxLongitude= hanedaLongitude+hanedaInsideRange
+        val minLatitude = hanedaLatitude-hanedaInsideRange
+        val maxLatitude= hanedaLatitude+hanedaInsideRange
         if(minLongitude < _longitude && _longitude < maxLongitude &&  minLatitude< _latitude && _latitude <maxLatitude){
             return true
         }
@@ -568,7 +568,7 @@ class MainActivity : AppCompatActivity() {
             val airplanesNames: MutableList<String> = mutableListOf()
             val now = LocalDateTime.now()
             val nowDate = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-            val arrivalRequiredMinutes = now.plusMinutes(_minutes_required_for_arrival)
+            val arrivalRequiredMinutes = now.plusMinutes(minutesRequiredForArrival)
             for (i in 0 until arrayJSON.length()) {
                 val currentJSON = arrayJSON.getJSONObject(i)
                 // 到着データを持っていない　＝　まだ到着していない
