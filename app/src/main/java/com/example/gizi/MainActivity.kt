@@ -38,6 +38,8 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
 
@@ -46,6 +48,8 @@ class MainActivity : AppCompatActivity() {
     private var adapter:GainListAdapter?= null
     private var mSoundControlViewModel:SoundControlViewModel? = null
     private var isOn: Boolean = false
+    private var isTrainOn: Boolean = false
+    private var isAirplaneOn: Boolean = false
 
     private val sCtrl = SoundControl()
 
@@ -54,10 +58,16 @@ class MainActivity : AppCompatActivity() {
     private val insideLatitudeRange = 0.01  // 範囲内とする緯度の値
     private val insideLongitudeRange = 0.01  // 範囲内とする経度の値
 
+    private val hanedaLatitude = 35.549404         // 羽田空港の代表緯度
+    private val hanedaLongitude = 139.780118       // 羽田空港の代表経度
+    private val hanedaInsideRange = 0.05          // 範囲内とする緯度経度の値（暫定）
+    private val minutesRequiredForArrival:Long = 10 // 到着に必要な時間(分)。到着予定時刻のこの時間の前からノイズキャンセラ実行
+
     private val stationLimit = 3 // 最寄り駅として選定する数
 
     private val handler = Handler()
     private var getTrainRunnable: Runnable? = null
+    private var getAirplanRunnable: Runnable? = null
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -150,6 +160,7 @@ class MainActivity : AppCompatActivity() {
         if (start){
             val gain = Gain(0, name, frequencies, gainInt)
             mSoundControlViewModel!!.insertGain(gain)
+            // 列車判定の繰り返し実行
             getTrainRunnable = Runnable {
                 val stationNameList = getStationNameListInCurrentVicinity()
                 val stationText = findViewById<TextView>(R.id.near_station)
@@ -160,11 +171,24 @@ class MainActivity : AppCompatActivity() {
                     receiver.execute("dc:title=$param")
                 }else {
                     stationText.text = getString(R.string.msg_station_not_found_in_db)
-                    stopPublicTransportationNoiseReduction(getString(R.string.msg_station_not_found_in_db))
+                    stopTrainNoiseReduction(getString(R.string.msg_station_not_found_in_db))
                 }
                 handler.postDelayed(getTrainRunnable!!, 10000)
             }
             handler.post(getTrainRunnable!!)
+
+            // 飛行機判定の繰り返し実行
+            getAirplanRunnable= Runnable {
+                if (isInsideHndNoise()){
+                    val receiver = OdptAirportInfoReceiver()
+                    receiver.execute("odpt:arrivalAirport=odpt.Airport:HND")
+                }else {
+                    stopAirplaneNoiseReduction(getString(R.string.msg_not_inside_hnd_airport))
+                }
+                handler.postDelayed(getAirplanRunnable!!, 10000)
+            }
+            handler.post(getAirplanRunnable!!)
+
         } else {
             if (getTrainRunnable !=null){
                 handler.removeCallbacks(getTrainRunnable!!)
@@ -295,7 +319,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+    /**
+     * 羽田空港の雑音範囲内にいるか判定する
+     */
+    private fun isInsideHndNoise():Boolean{
+        val minLongitude = hanedaLongitude-hanedaInsideRange
+        val maxLongitude= hanedaLongitude+hanedaInsideRange
+        val minLatitude = hanedaLatitude-hanedaInsideRange
+        val maxLatitude= hanedaLatitude+hanedaInsideRange
+        if(minLongitude < _longitude && _longitude < maxLongitude &&  minLatitude< _latitude && _latitude <maxLatitude){
+            return true
+        }
+        return  false
+    }
     /**
      * 周辺の駅名の一覧を取得するメソッド。
      */
@@ -431,35 +467,10 @@ class MainActivity : AppCompatActivity() {
                 val receiver = OdptTrainInfoReceiver()
                 receiver.execute("odpt:fromStation=$param")
             }else{
-                stopPublicTransportationNoiseReduction("API駅情報なし")
+                stopTrainNoiseReduction("API駅情報なし")
             }
         }
     }
-
-
-    /**
-     * 公共交通機関ノイズ低減を開始する関数
-     */
-    private fun startPublicTransportationNoiseReduction(trainList: List<String>){
-        val note = trainList.joinToString(separator = ",")
-        val statonNameText = findViewById<TextView>(R.id.train_name)
-        statonNameText.text =note
-        if(!isOn){
-            onOffButton.callOnClick()
-        }
-    }
-
-    /**
-     * 公共交通機関ノイズ低減を開停止する関数
-     */
-    private fun stopPublicTransportationNoiseReduction(reason: String){
-        val statonNameText = findViewById<TextView>(R.id.train_name)
-        statonNameText.text =reason
-        if(isOn){
-            onOffButton.callOnClick()
-        }
-    }
-
 
     /**
      * 列車オープンデータを非同期でAPIデータを取得するクラス。
@@ -497,10 +508,114 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             if(trainNumbers.count() >0){
-                startPublicTransportationNoiseReduction(trainNumbers)
+                startTrainNoiseReduction(trainNumbers)
             }else{
-                stopPublicTransportationNoiseReduction("列車情報なし")
+                stopTrainNoiseReduction("列車情報なし")
             }
+        }
+    }
+
+    /**
+     * 列車ノイズ低減を開始する関数
+     */
+    private fun startTrainNoiseReduction(trainList: List<String>){
+        isTrainOn = true
+        val note = trainList.joinToString(separator = ",")
+        val statonNameText = findViewById<TextView>(R.id.train_name)
+        statonNameText.text =note
+        if(!isOn){
+            onOffButton.callOnClick()
+        }
+    }
+
+    /**
+     * 列車ノイズ低減を開停止する関数
+     */
+    private fun stopTrainNoiseReduction(reason: String){
+        isTrainOn = false
+        val statonNameText = findViewById<TextView>(R.id.train_name)
+        statonNameText.text =reason
+        if(isAirplaneOn==false && isOn){
+            onOffButton.callOnClick()
+        }
+    }
+
+    /**
+     * 空港情報オープンデータを非同期でAPIデータを取得するクラス。
+     */
+    @SuppressLint("StaticFieldLeak")
+    private inner class OdptAirportInfoReceiver : AsyncTask<String, String, String>() {
+
+        /**
+         * バックグラウンドで実行される処理（API実行）
+         */
+        override fun doInBackground(vararg params: String): String {
+            val apiKey =  getString(R.string.api_key)
+            var targetApi = "${getString(R.string.flight_info_arrival)}?"
+            targetApi += params.joinToString("&")
+            //API keyを使って接続URL文字列を作成。
+            val urlStr = targetApi + "&acl:consumerKey=${apiKey}"
+            return getWebJsonData(urlStr)
+        }
+
+        /**
+         * API処理結果を受けて実行する処理
+         */
+        @RequiresApi(Build.VERSION_CODES.O)
+        override fun onPostExecute(result: String) {
+            //JSON文字列からJSONObjectオブジェクトを生成。これをルートJSONオブジェクトとする。
+            val arrayJSON = JSONArray(result)
+            val airplanesNames: MutableList<String> = mutableListOf()
+            val now = LocalDateTime.now()
+            val nowDate = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+            val arrivalRequiredMinutes = now.plusMinutes(minutesRequiredForArrival)
+            for (i in 0 until arrayJSON.length()) {
+                val currentJSON = arrayJSON.getJSONObject(i)
+                // 到着データを持っていない　＝　まだ到着していない
+                if(currentJSON.has("odpt:actualArrivalTime") == false){
+                    val scheduledArrivalTime = currentJSON.getString("odpt:scheduledArrivalTime")
+                    val scheduledArrivalDateString = "${nowDate}T${scheduledArrivalTime}:00"
+                    val scheduledArrivalDate = LocalDateTime.parse(scheduledArrivalDateString)
+
+                    // 現在時刻の方が到着予定時刻より前（まだ到着していない）
+                    // かつ到着範囲時間の方が、到着予定時刻のより後ろ（範囲内に入った）
+                    if(now.isBefore(scheduledArrivalDate) && arrivalRequiredMinutes.isAfter(scheduledArrivalDate)){
+                        val airplaneName = currentJSON.getString("odpt:flightNumber")
+                        airplanesNames.add(airplaneName)
+                    }
+                }
+            }
+
+            if(airplanesNames.count() >0){
+                startAirplaneNoiseReduction(airplanesNames)
+            }else{
+                stopAirplaneNoiseReduction("該当飛行情報なし")
+            }
+        }
+    }
+
+    /**
+     * 飛行機ノイズ低減を開始する関数
+     */
+    private fun startAirplaneNoiseReduction(trainList: List<String>){
+        isAirplaneOn = true
+        val note = trainList.joinToString(separator = ",")
+        val airplaneNameText = findViewById<TextView>(R.id.airplane_name)
+        airplaneNameText.text =note
+        if(!isOn){
+            onOffButton.callOnClick()
+        }
+    }
+
+    /**
+     * 飛行機ノイズ低減を開停止する関数
+     */
+    private fun stopAirplaneNoiseReduction(reason: String){
+        isAirplaneOn = false
+        val airplaneNameText = findViewById<TextView>(R.id.airplane_name)
+        airplaneNameText.text =reason
+        if(isTrainOn==false && isOn){
+            onOffButton.callOnClick()
         }
     }
 }
