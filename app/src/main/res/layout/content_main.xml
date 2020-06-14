@@ -25,10 +25,11 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/textNr"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
+            android:layout_marginTop="20dp"
             android:text="@string/noise_reduction"
             android:textSize="30sp"
             app:layout_constraintStart_toStartOf="parent"
@@ -39,13 +40,14 @@
             android:layout_width="wrap_content"
             android:layout_height="50dp"
             android:layout_marginEnd="5dp"
+            android:layout_marginTop="20dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toEndOf="@+id/textView2"
+            app:layout_constraintStart_toEndOf="@+id/textNr"
             app:layout_constraintTop_toBottomOf="@+id/onOffButton" />
 
         <TextView
-            android:id="@+id/textView3"
+            android:id="@+id/textPublicTransportaionNr"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
@@ -53,7 +55,7 @@
             android:text="@string/noise_reduction_public_transportation"
             android:textSize="30sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView2" />
+            app:layout_constraintTop_toBottomOf="@+id/textNr" />
 
         <Switch
             android:id="@+id/switchNrTransportation"
@@ -63,19 +65,19 @@
             android:layout_marginEnd="5dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toEndOf="@+id/textView3"
+            app:layout_constraintStart_toEndOf="@+id/textPublicTransportaionNr"
             app:layout_constraintTop_toBottomOf="@+id/switchNr" />
 
         <TextView
-            android:id="@+id/textView4"
+            android:id="@+id/textBluetoothMic"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
             android:layout_marginTop="20dp"
-            android:text="Bluetooth マイク"
+            android:text="@string/text_bluetooth_mic"
             android:textSize="30sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView3" />
+            app:layout_constraintTop_toBottomOf="@+id/textPublicTransportaionNr" />
 
         <Switch
             android:id="@+id/switchBluetoothMic"
@@ -85,7 +87,7 @@
             android:layout_marginEnd="5dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toEndOf="@+id/textView4"
+            app:layout_constraintStart_toEndOf="@+id/textBluetoothMic"
             app:layout_constraintTop_toBottomOf="@+id/switchNrTransportation" />
 
         <androidx.recyclerview.widget.RecyclerView
@@ -95,11 +97,11 @@
             android:layout_marginTop="20dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView4"
+            app:layout_constraintTop_toBottomOf="@+id/textBluetoothMic"
             tools:listitem="@layout/recyclerview_item" />
 
         <TextView
-            android:id="@+id/textView5"
+            android:id="@+id/textLat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/latitude_title"
@@ -113,15 +115,15 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:maxLines="1"
-            app:layout_constraintLeft_toRightOf="@+id/textView5"
+            app:layout_constraintLeft_toRightOf="@+id/textLat"
             app:layout_constraintTop_toBottomOf="@+id/recyclerview"
             tools:layout_editor_absoluteX="32dp" />
 
         <TextView
-            android:id="@+id/textView6"
+            android:id="@+id/textLng"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
+            android:layout_marginEnd="5dp"
             android:text="@string/longitude_title"
             app:layout_constraintLeft_toRightOf="@+id/latitudeValue"
             app:layout_constraintTop_toBottomOf="@+id/recyclerview"
@@ -133,17 +135,17 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:maxLines="1"
-            app:layout_constraintLeft_toRightOf="@+id/textView6"
+            app:layout_constraintLeft_toRightOf="@+id/textLng"
             app:layout_constraintTop_toBottomOf="@+id/recyclerview"
             />
         <TextView
-            android:id="@+id/textView7"
+            android:id="@+id/textNearStation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:text="最寄り駅:"
+            android:layout_marginEnd="5dp"
+            android:text="@string/near_station"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView5"
+            app:layout_constraintTop_toBottomOf="@+id/textLat"
             />
         <TextView
             android:id="@+id/near_station"
@@ -151,17 +153,17 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:maxLines="1"
-            app:layout_constraintLeft_toRightOf="@+id/textView7"
-            app:layout_constraintTop_toBottomOf="@+id/textView5"
+            app:layout_constraintLeft_toRightOf="@+id/textNearStation"
+            app:layout_constraintTop_toBottomOf="@+id/textLat"
             />
         <TextView
-            android:id="@+id/textView8"
+            android:id="@+id/textTrainInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
+            android:layout_marginEnd="5dp"
             android:text="@string/train_name"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView7"
+            app:layout_constraintTop_toBottomOf="@+id/textNearStation"
             />
         <TextView
             android:id="@+id/train_name"
@@ -169,8 +171,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:maxLines="1"
-            app:layout_constraintLeft_toRightOf="@+id/textView8"
-            app:layout_constraintTop_toBottomOf="@+id/textView7"
+            app:layout_constraintLeft_toRightOf="@+id/textTrainInfo"
+            app:layout_constraintTop_toBottomOf="@+id/textNearStation"
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GIZI</string>
+    <string name="app_name">騒音耳栓</string>
     <string name="action_settings">Settings</string>
     <string name="hint_name">名前</string>
     <string name="hint_frequencies">周波数帯</string>
@@ -25,4 +25,7 @@
     <string name="station_api_url">https://api.odpt.org/api/v4/odpt:Station</string>
     <string name="train_api_url">https://api.odpt.org/api/v4/odpt:Train</string>
     <string name="api_key">apitoken</string>
+    <string name="near_station">最寄り駅:</string>
+    <string name="text_bluetooth_mic">Bluetooth マイク</string>
+    <string name="ear_plug">耳栓モード</string>
 </resources>

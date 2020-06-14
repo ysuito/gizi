@@ -6,12 +6,13 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import android.os.AsyncTask
+import android.util.Log
 import com.example.gizi.R
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 
-@Database(entities = [Gain::class,Setting::class,Station::class], version = 18, exportSchema = false)
+@Database(entities = [Gain::class,Setting::class,Station::class], version = 22, exportSchema = false)
 abstract class SoundControlRoomDatabase:RoomDatabase() {
 
     abstract fun soundControlDao():SoundControlDao
@@ -45,7 +46,7 @@ abstract class SoundControlRoomDatabase:RoomDatabase() {
 
         val ctx = context
         private val mDao: SoundControlDao = db.soundControlDao()
-        internal var gains = arrayOf(arrayOf("人の声","100-1000",90))
+        internal var gains = arrayOf(arrayOf("耳栓","0-20000",0))
         val stations = readStationCsv(ctx.getString(R.string.station_csv_file))
 
         override fun doInBackground(vararg params: Void): Void? {

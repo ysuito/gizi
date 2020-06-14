@@ -17,16 +17,17 @@ class NewGainActivity:AppCompatActivity() {
         setContentView(R.layout.new_gain_activity)
 
         val spinnerItems = arrayOf(
-            "カスタム",
+            "耳栓",
             "人の声",
             "ビープ音",
             "チャイム",
-            "車の音"
+            "車の音",
+            "カスタム"
         )
         val noises = arrayOf(
             mapOf(
-                "name" to "カスタム",
-                "frequencies" to ""
+                "name" to "耳栓",
+                "frequencies" to "0-20000"
             ),
             mapOf(
                 "name" to "人の声",
@@ -43,6 +44,10 @@ class NewGainActivity:AppCompatActivity() {
             mapOf(
                 "name" to "車の音",
                 "frequencies" to "0-100"
+            ),
+            mapOf(
+                "name" to "カスタム",
+                "frequencies" to ""
             )
         )
 

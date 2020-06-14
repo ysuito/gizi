@@ -56,4 +56,5 @@ interface SoundControlDao {
     @Query("SELECT * from station_table WHERE :minLng < lng AND lng < :maxLng AND :minLat < lat AND lat < :maxLat ORDER BY ((:lat-lat)*(:lat-lat)+(:lng-lng)*(:lng-lng)) LIMIT :limit")
     fun getNearStations(lng:Double,lat:Double,minLng:Double,
                         maxLng:Double,minLat:Double,maxLat:Double,limit:Int):List<Station>
+
 }
