@@ -16,6 +16,7 @@
     <string name="longitude_title">経度:</string>
     <string name="train_name">列車情報:</string>
     <string name="station_name">駅名</string>
+    <string name="airplane_name">飛行機情報:</string>
     <string name="search_train_onoff">周辺列車探索</string>
     <string name="station_csv_file">station20200316free.csv</string>
     <string name="join_csv_file">join20200306.csv</string>
@@ -24,5 +25,8 @@
     <string name="msg_station_not_found_in_db">DB駅情報なし</string>
     <string name="station_api_url">https://api.odpt.org/api/v4/odpt:Station</string>
     <string name="train_api_url">https://api.odpt.org/api/v4/odpt:Train</string>
+    <string name="flight_info_arrival">https://api.odpt.org/api/v4/odpt:FlightInformationArrival</string>
+    <string name="flight_info_departure">https://api.odpt.org/api/v4/odpt:FlightInformationDeparture</string>
+    <string name="msg_not_inside_hnd_airport">羽田空港外</string>
     <string name="api_key">apitoken</string>
 </resources>
