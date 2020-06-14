@@ -576,6 +576,9 @@ class MainActivity : AppCompatActivity() {
                     val scheduledArrivalTime = currentJSON.getString("odpt:scheduledArrivalTime")
                     val scheduledArrivalDateString = "${nowDate}T${scheduledArrivalTime}:00"
                     val scheduledArrivalDate = LocalDateTime.parse(scheduledArrivalDateString)
+
+                    // 現在時刻の方が到着予定時刻より前（まだ到着していない）
+                    // かつ到着範囲時間の方が、到着予定時刻のより後ろ（範囲内に入った）
                     if(now.isBefore(scheduledArrivalDate) && arrivalRequiredMinutes.isAfter(scheduledArrivalDate)){
                         val airplaneName = currentJSON.getString("odpt:flightNumber")
                         airplanesNames.add(airplaneName)
