@@ -441,7 +441,9 @@ class MainActivity : AppCompatActivity() {
          * バックグラウンドで実行される処理（API実行）
          */
         override fun doInBackground(vararg params: String): String {
-            val apiKey =  getString(R.string.api_key)
+            //val apiKey =  getString(R.string.api_key)
+            val apiKey = SecretString.getAPIKey()
+
             var targetApi = "${getString(R.string.station_api_url)}?"
             targetApi += params.joinToString("&")
             //API keyを使って接続URL文字列を作成。
@@ -482,7 +484,8 @@ class MainActivity : AppCompatActivity() {
          * バックグラウンドで実行される処理（API実行）
          */
         override fun doInBackground(vararg params: String): String {
-            val apiKey =  getString(R.string.api_key)
+//            val apiKey =  getString(R.string.api_key)
+            val apiKey = SecretString.getAPIKey()
             var targetApi = "${getString(R.string.train_api_url)}?"
             targetApi += params.joinToString("&")
             //API keyを使って接続URL文字列を作成。
@@ -550,7 +553,8 @@ class MainActivity : AppCompatActivity() {
          * バックグラウンドで実行される処理（API実行）
          */
         override fun doInBackground(vararg params: String): String {
-            val apiKey =  getString(R.string.api_key)
+//            val apiKey =  getString(R.string.api_key)
+            val apiKey = SecretString.getAPIKey()
             var targetApi = "${getString(R.string.flight_info_arrival)}?"
             targetApi += params.joinToString("&")
             //API keyを使って接続URL文字列を作成。

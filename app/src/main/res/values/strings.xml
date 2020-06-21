@@ -28,7 +28,6 @@
     <string name="flight_info_arrival">https://api.odpt.org/api/v4/odpt:FlightInformationArrival</string>
     <string name="flight_info_departure">https://api.odpt.org/api/v4/odpt:FlightInformationDeparture</string>
     <string name="msg_not_inside_hnd_airport">羽田空港外</string>
-    <string name="api_key">apitoken</string>
     <string name="near_station">最寄り駅:</string>
     <string name="text_bluetooth_mic">Bluetooth マイク</string>
     <string name="ear_plug">耳栓モード</string>
