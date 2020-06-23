@@ -175,13 +175,13 @@
             app:layout_constraintTop_toBottomOf="@+id/textNearStation"
             />
         <TextView
-            android:id="@+id/textView9"
+            android:id="@+id/textPlainInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
             android:text="@string/airplane_name"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView8"
+            app:layout_constraintTop_toBottomOf="@+id/train_name"
             />
         <TextView
             android:id="@+id/airplane_name"
@@ -189,8 +189,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:maxLines="1"
-            app:layout_constraintLeft_toRightOf="@+id/textView9"
-            app:layout_constraintTop_toBottomOf="@+id/textView8"
+            app:layout_constraintLeft_toRightOf="@+id/textPlainInfo"
+            app:layout_constraintTop_toBottomOf="@+id/train_name"
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
