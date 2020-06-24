@@ -88,7 +88,6 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(Intent(this, NewGainActivity::class.java), 1111)
         }
 
-        val switchNr = findViewById<Switch>(R.id.switchNr)
         val switchNrTranportation = findViewById<Switch>(R.id.switchNrTransportation)
         val switchBluetoothMic = findViewById<Switch>(R.id.switchBluetoothMic)
 
@@ -104,7 +103,6 @@ class MainActivity : AppCompatActivity() {
             // データベース初期化時にnullがobserveされるためチェック
             if (it != null) {
 
-                switchNr.isChecked = it.mNr
                 sCtrl.setNr(it.mNr)
 
                 switchNrTranportation.isChecked = it.mNrTranportation
@@ -115,9 +113,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        switchNr.setOnClickListener {
-            mSoundControlViewModel!!.switchNr()
-        }
         switchNrTranportation.setOnClickListener {
             mSoundControlViewModel!!.switchNrTransportation()
         }
@@ -193,6 +188,8 @@ class MainActivity : AppCompatActivity() {
             if (getTrainRunnable !=null){
                 handler.removeCallbacks(getTrainRunnable!!)
                 getTrainRunnable =null
+                handler.removeCallbacks(getAirplanRunnable!!)
+                getAirplanRunnable =null
             }
         }
     }
@@ -216,6 +213,11 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_delete -> {
                 mSoundControlViewModel!!.deleteAllGain()
+                true
+            }
+            R.id.term -> {
+                val intent = Intent(this, TermActivity::class.java)
+                startActivity(intent)
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -441,9 +443,7 @@ class MainActivity : AppCompatActivity() {
          * バックグラウンドで実行される処理（API実行）
          */
         override fun doInBackground(vararg params: String): String {
-            //val apiKey =  getString(R.string.api_key)
-            val apiKey = SecretString.getAPIKey()
-
+            val apiKey =  getString(R.string.api_key)
             var targetApi = "${getString(R.string.station_api_url)}?"
             targetApi += params.joinToString("&")
             //API keyを使って接続URL文字列を作成。
@@ -484,8 +484,7 @@ class MainActivity : AppCompatActivity() {
          * バックグラウンドで実行される処理（API実行）
          */
         override fun doInBackground(vararg params: String): String {
-//            val apiKey =  getString(R.string.api_key)
-            val apiKey = SecretString.getAPIKey()
+            val apiKey =  getString(R.string.api_key)
             var targetApi = "${getString(R.string.train_api_url)}?"
             targetApi += params.joinToString("&")
             //API keyを使って接続URL文字列を作成。
@@ -497,6 +496,9 @@ class MainActivity : AppCompatActivity() {
          * API処理結果をUIに反映される処理
          */
         override fun onPostExecute(result: String) {
+            val now = LocalDateTime.now()
+            println(now)
+            findViewById<TextView>(R.id.textRefreshTime).text = now.toString()
             //JSON文字列からJSONObjectオブジェクトを生成。これをルートJSONオブジェクトとする。
             val arrayJSON = JSONArray(result)
 
@@ -524,8 +526,8 @@ class MainActivity : AppCompatActivity() {
     private fun startTrainNoiseReduction(trainList: List<String>){
         isTrainOn = true
         val note = trainList.joinToString(separator = ",")
-        val statonNameText = findViewById<TextView>(R.id.train_name)
-        statonNameText.text =note
+        val stationNameText = findViewById<TextView>(R.id.train_name)
+        stationNameText.text =note
         if(!isOn){
             onOffButton.callOnClick()
         }
@@ -536,8 +538,8 @@ class MainActivity : AppCompatActivity() {
      */
     private fun stopTrainNoiseReduction(reason: String){
         isTrainOn = false
-        val statonNameText = findViewById<TextView>(R.id.train_name)
-        statonNameText.text =reason
+        val stationNameText = findViewById<TextView>(R.id.train_name)
+        stationNameText.text =reason
         if(isAirplaneOn==false && isOn){
             onOffButton.callOnClick()
         }
@@ -553,8 +555,7 @@ class MainActivity : AppCompatActivity() {
          * バックグラウンドで実行される処理（API実行）
          */
         override fun doInBackground(vararg params: String): String {
-//            val apiKey =  getString(R.string.api_key)
-            val apiKey = SecretString.getAPIKey()
+            val apiKey =  getString(R.string.api_key)
             var targetApi = "${getString(R.string.flight_info_arrival)}?"
             targetApi += params.joinToString("&")
             //API keyを使って接続URL文字列を作成。
@@ -571,6 +572,7 @@ class MainActivity : AppCompatActivity() {
             val arrayJSON = JSONArray(result)
             val airplanesNames: MutableList<String> = mutableListOf()
             val now = LocalDateTime.now()
+            findViewById<TextView>(R.id.textRefreshTime).text = now.toString()
             val nowDate = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
             val arrivalRequiredMinutes = now.plusMinutes(minutesRequiredForArrival)
             for (i in 0 until arrayJSON.length()) {

@@ -25,28 +25,6 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textNr"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="5dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/noise_reduction"
-            android:textSize="30sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/onOffButton" />
-
-        <Switch
-            android:id="@+id/switchNr"
-            android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:layout_marginEnd="5dp"
-            android:layout_marginTop="20dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toEndOf="@+id/textNr"
-            app:layout_constraintTop_toBottomOf="@+id/onOffButton" />
-
-        <TextView
             android:id="@+id/textPublicTransportaionNr"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -55,7 +33,7 @@
             android:text="@string/noise_reduction_public_transportation"
             android:textSize="30sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textNr" />
+            app:layout_constraintTop_toBottomOf="@+id/onOffButton" />
 
         <Switch
             android:id="@+id/switchNrTransportation"
@@ -66,7 +44,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toEndOf="@+id/textPublicTransportaionNr"
-            app:layout_constraintTop_toBottomOf="@+id/switchNr" />
+            app:layout_constraintTop_toBottomOf="@+id/onOffButton" />
 
         <TextView
             android:id="@+id/textBluetoothMic"
@@ -101,12 +79,28 @@
             tools:listitem="@layout/recyclerview_item" />
 
         <TextView
+            android:id="@+id/textRefreshTimeTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/refreshTimeTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            />
+
+        <TextView
+            android:id="@+id/textRefreshTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintLeft_toRightOf="@+id/textRefreshTimeTitle"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerview" />
+
+        <TextView
             android:id="@+id/textLat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/latitude_title"
-            app:layout_constraintStart_toStartOf="@+id/recyclerview"
-            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textRefreshTimeTitle"
             />
 
         <TextView
@@ -116,7 +110,7 @@
             android:layout_weight="0.5"
             android:maxLines="1"
             app:layout_constraintLeft_toRightOf="@+id/textLat"
-            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            app:layout_constraintTop_toBottomOf="@+id/textRefreshTimeTitle"
             tools:layout_editor_absoluteX="32dp" />
 
         <TextView
@@ -126,7 +120,7 @@
             android:layout_marginEnd="5dp"
             android:text="@string/longitude_title"
             app:layout_constraintLeft_toRightOf="@+id/latitudeValue"
-            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            app:layout_constraintTop_toBottomOf="@+id/textRefreshTimeTitle"
             />
 
         <TextView
@@ -136,7 +130,7 @@
             android:layout_weight="0.5"
             android:maxLines="1"
             app:layout_constraintLeft_toRightOf="@+id/textLng"
-            app:layout_constraintTop_toBottomOf="@+id/recyclerview"
+            app:layout_constraintTop_toBottomOf="@+id/textRefreshTimeTitle"
             />
         <TextView
             android:id="@+id/textNearStation"
@@ -175,13 +169,13 @@
             app:layout_constraintTop_toBottomOf="@+id/textNearStation"
             />
         <TextView
-            android:id="@+id/textPlainInfo"
+            android:id="@+id/textAirPlainInfoTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
+            android:layout_marginStart="5dp"
             android:text="@string/airplane_name"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/train_name"
+            app:layout_constraintTop_toBottomOf="@+id/textTrainInfo"
             />
         <TextView
             android:id="@+id/airplane_name"
@@ -189,8 +183,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:maxLines="1"
-            app:layout_constraintLeft_toRightOf="@+id/textPlainInfo"
-            app:layout_constraintTop_toBottomOf="@+id/train_name"
+            app:layout_constraintLeft_toRightOf="@+id/textAirPlainInfoTitle"
+            app:layout_constraintTop_toBottomOf="@+id/textTrainInfo"
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
